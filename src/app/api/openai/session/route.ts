@@ -1,6 +1,7 @@
-import ChatClient from '@/components/layout/openai/chat-client/chat-client';
+// app/api/session/route.ts
+import { NextResponse } from 'next/server';
 
-export default async function Page() {
+export async function GET() {
   const res = await fetch('https://api.openai.com/v1/realtime/sessions', {
     method: 'POST',
     headers: {
@@ -11,19 +12,15 @@ export default async function Page() {
       model: 'gpt-4o-realtime-preview-2024-12-17',
       voice: 'verse',
     }),
-    cache: 'no-store',
   });
 
   if (!res.ok) {
-    throw new Error('Failed to fetch ephemeral key');
+    return NextResponse.json(
+      { error: 'Failed to get ephemeral key' },
+      { status: 500 },
+    );
   }
 
   const data = await res.json();
-  const ephemeralKey = data.client_secret.value;
-
-  return (
-    <main>
-      <ChatClient ephemeralKey={ephemeralKey} />
-    </main>
-  );
+  return NextResponse.json(data);
 }

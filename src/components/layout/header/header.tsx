@@ -9,25 +9,10 @@ export default function Header() {
           href={`/`}
           className="text-xl font-bold text-gray-800 dark:text-gray-200"
         >
-          MarketBot
+          OpenAI AI Demo
         </Link>
       </div>
-      <div className="flex shrink-0">
-        <nav className="hidden md:flex">
-          <Link
-            href={`/about`}
-            className="text-gray-800 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-300"
-          >
-            About
-          </Link>
-          <Link
-            href={`/blog`}
-            className="text-gray-800 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-300"
-          >
-            Blog
-          </Link>
-        </nav>
-      </div>
+      <div className="flex shrink-0"></div>
       <div className="flex w-1/2 justify-end">
         <ModeToggle />
       </div>
