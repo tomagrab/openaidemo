@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-export function useRealtimeConnection(initialEphemeralKey?: string) {
-  const [ephemeralKey, setEphemeralKey] = useState(initialEphemeralKey);
+export function useRealtimeConnection() {
   const [connected, setConnected] = useState(false);
   const [responseText, setResponseText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -11,11 +10,10 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const gotAudioTrackRef = useRef(false);
 
   const fetchNewEphemeralKey = useCallback(async () => {
-    const res = await fetch('/api/openai/session', {
-      cache: 'no-store',
-    });
+    const res = await fetch('/api/openai/session', { cache: 'no-store' });
     if (!res.ok) {
       throw new Error('Failed to fetch ephemeral key');
     }
@@ -23,32 +21,56 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
     return data.client_secret.value;
   }, []);
 
+  const cleanupConnection = useCallback(() => {
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    dcRef.current = null;
+    gotAudioTrackRef.current = false;
+    if (audioRef.current) {
+      audioRef.current.srcObject = null;
+    }
+    setConnected(false);
+  }, []);
+
   const initConnection = useCallback(async () => {
     setError(null);
     setConnected(false);
 
     try {
-      // Use existing ephemeralKey or fetch a new one if it's missing or expired
-      const keyToUse = ephemeralKey || (await fetchNewEphemeralKey());
-      if (!ephemeralKey) setEphemeralKey(keyToUse);
+      // Always fetch a fresh ephemeral key to avoid expiration issues
+      const keyToUse = await fetchNewEphemeralKey();
 
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
-      const audioEl = document.createElement('audio');
-      audioEl.autoplay = true;
+      let audioEl = audioRef.current;
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.autoplay = true;
+        audioRef.current = audioEl;
+      }
+      audioEl.srcObject = null;
+      gotAudioTrackRef.current = false;
+
       pc.ontrack = e => {
-        audioEl.srcObject = e.streams[0];
+        if (!gotAudioTrackRef.current && e.streams && e.streams[0]) {
+          audioEl.srcObject = e.streams[0];
+          gotAudioTrackRef.current = true;
+        }
       };
-      audioRef.current = audioEl;
 
       const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-      pc.addTrack(ms.getTracks()[0]);
+      ms.getTracks().forEach(track => {
+        if (pc.signalingState !== 'closed') {
+          pc.addTrack(track, ms);
+        }
+      });
 
       const dc = pc.createDataChannel('oai-events');
       dcRef.current = dc;
 
-      // Data channel events
       dc.addEventListener('open', () => {
         setConnected(true);
       });
@@ -63,7 +85,7 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
         if (event.type === 'response.text.delta') {
           setResponseText(prev => prev + event.delta);
         } else if (event.type === 'response.done') {
-          // The final response is complete
+          setResponseText(prev => prev + '\n\n');
         }
       });
 
@@ -88,8 +110,8 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
         );
       }
 
-      const answer = {
-        type: 'answer' as RTCSdpType,
+      const answer: RTCSessionDescriptionInit = {
+        type: 'answer',
         sdp: await sdpResponse.text(),
       };
       await pc.setRemoteDescription(answer);
@@ -100,11 +122,14 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
           : 'An unknown error occurred while connecting.',
       );
     }
-  }, [ephemeralKey, fetchNewEphemeralKey]);
+  }, [fetchNewEphemeralKey]);
 
   useEffect(() => {
     initConnection();
-  }, [initConnection]);
+    return () => {
+      cleanupConnection();
+    };
+  }, [initConnection, cleanupConnection]);
 
   const sendMessage = useCallback((prompt: string) => {
     if (!dcRef.current) {
@@ -124,12 +149,7 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
       item: {
         type: 'message',
         role: 'user',
-        content: [
-          {
-            type: 'input_text',
-            text: prompt,
-          },
-        ],
+        content: [{ type: 'input_text', text: prompt }],
       },
     };
 
@@ -153,8 +173,9 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
   }, []);
 
   const attemptReconnect = useCallback(() => {
+    cleanupConnection();
     initConnection();
-  }, [initConnection]);
+  }, [cleanupConnection, initConnection]);
 
   return {
     connected,
@@ -162,6 +183,5 @@ export function useRealtimeConnection(initialEphemeralKey?: string) {
     responseText,
     sendMessage,
     attemptReconnect,
-    inputKey: ephemeralKey,
   };
 }
