@@ -1,93 +1,84 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
-export function useRealtimeConnection() {
-  const [connected, setConnected] = useState(false);
-  const [responseText, setResponseText] = useState('');
-  const [error, setError] = useState<string | null>(null);
+interface UseRealtimeConnectionParams {
+  ephemeralKey: string | null;
+  voiceMode: boolean;
+  onTrack: (stream: MediaStream | null) => void;
+  onMessage: (event: Record<string, unknown>) => void; // Called when text events occur
+  onError: (err: string) => void;
+  onOpen: () => void;
+  onClose: () => void;
+}
 
+/**
+ * Manages the actual WebRTC PeerConnection and DataChannel.
+ * Requires ephemeralKey to connect.
+ * Not responsible for fetching keys or handling text/audio logic directly,
+ * just sets up the connection and emits events.
+ */
+export function useRealtimeConnection({
+  ephemeralKey,
+  voiceMode,
+  onTrack,
+  onMessage,
+  onError,
+  onOpen,
+  onClose,
+}: UseRealtimeConnectionParams) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const gotAudioTrackRef = useRef(false);
 
-  const fetchNewEphemeralKey = useCallback(async () => {
-    const res = await fetch('/api/openai/session', { cache: 'no-store' });
-    if (!res.ok) {
-      throw new Error('Failed to fetch ephemeral key');
-    }
-    const data = await res.json();
-    return data.client_secret.value;
-  }, []);
+  const [connected, setConnected] = useState(false);
 
-  const cleanupConnection = useCallback(() => {
+  const cleanup = useCallback(() => {
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
     }
     dcRef.current = null;
-    gotAudioTrackRef.current = false;
-    if (audioRef.current) {
-      audioRef.current.srcObject = null;
-    }
     setConnected(false);
-  }, []);
+    onTrack(null);
+  }, [onTrack]);
 
   const initConnection = useCallback(async () => {
-    setError(null);
-    setConnected(false);
+    if (!ephemeralKey) return; // Wait until we have a key
 
     try {
-      // Always fetch a fresh ephemeral key to avoid expiration issues
-      const keyToUse = await fetchNewEphemeralKey();
-
+      cleanup();
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
-      let audioEl = audioRef.current;
-      if (!audioEl) {
-        audioEl = document.createElement('audio');
-        audioEl.autoplay = true;
-        audioRef.current = audioEl;
-      }
-      audioEl.srcObject = null;
-      gotAudioTrackRef.current = false;
-
       pc.ontrack = e => {
-        if (!gotAudioTrackRef.current && e.streams && e.streams[0]) {
-          audioEl.srcObject = e.streams[0];
-          gotAudioTrackRef.current = true;
+        if (voiceMode && e.streams[0]) {
+          onTrack(e.streams[0]);
+        } else {
+          onTrack(null);
         }
       };
 
-      const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-      ms.getTracks().forEach(track => {
-        if (pc.signalingState !== 'closed') {
+      // Only add local track if voiceMode is on
+      if (voiceMode) {
+        const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
+        ms.getTracks().forEach(track => {
           pc.addTrack(track, ms);
-        }
-      });
+        });
+      }
 
       const dc = pc.createDataChannel('oai-events');
       dcRef.current = dc;
 
-      dc.addEventListener('open', () => {
+      dc.onopen = () => {
         setConnected(true);
-      });
-
-      dc.addEventListener('close', () => {
+        onOpen();
+      };
+      dc.onclose = () => {
         setConnected(false);
-        setError('Data channel closed unexpectedly. Please reconnect.');
-      });
-
-      dc.addEventListener('message', e => {
-        const event = JSON.parse(e.data);
-        if (event.type === 'response.text.delta') {
-          setResponseText(prev => prev + event.delta);
-        } else if (event.type === 'response.done') {
-          setResponseText(prev => prev + '\n\n');
-        }
-      });
+        onClose();
+        onError('Data channel closed unexpectedly. Please reconnect.');
+      };
+      dc.onmessage = e => onMessage(JSON.parse(e.data));
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -99,7 +90,7 @@ export function useRealtimeConnection() {
         method: 'POST',
         body: offer.sdp,
         headers: {
-          Authorization: `Bearer ${keyToUse}`,
+          Authorization: `Bearer ${ephemeralKey}`,
           'Content-Type': 'application/sdp',
         },
       });
@@ -115,73 +106,39 @@ export function useRealtimeConnection() {
         sdp: await sdpResponse.text(),
       };
       await pc.setRemoteDescription(answer);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An unknown error occurred while connecting.',
+    } catch (err: Error | unknown) {
+      onError(
+        err instanceof Error ? err.message : 'Unknown error in initConnection',
       );
     }
-  }, [fetchNewEphemeralKey]);
+  }, [
+    ephemeralKey,
+    voiceMode,
+    onTrack,
+    onMessage,
+    onError,
+    onOpen,
+    onClose,
+    cleanup,
+  ]);
 
   useEffect(() => {
     initConnection();
     return () => {
-      cleanupConnection();
+      cleanup();
     };
-  }, [initConnection, cleanupConnection]);
+  }, [initConnection, cleanup]);
 
-  const sendMessage = useCallback((prompt: string) => {
-    if (!dcRef.current) {
-      setError('Data channel not established. Please reconnect.');
-      return;
-    }
+  const send = useCallback(
+    (msg: object) => {
+      if (!dcRef.current || dcRef.current.readyState !== 'open') {
+        onError('Data channel is not open. Please wait or reconnect.');
+        return;
+      }
+      dcRef.current.send(JSON.stringify(msg));
+    },
+    [onError],
+  );
 
-    if (dcRef.current.readyState !== 'open') {
-      setError('Data channel is not open. Please wait or reconnect.');
-      return;
-    }
-
-    setResponseText('');
-
-    const userMsgEvent = {
-      type: 'conversation.item.create',
-      item: {
-        type: 'message',
-        role: 'user',
-        content: [{ type: 'input_text', text: prompt }],
-      },
-    };
-
-    try {
-      dcRef.current.send(JSON.stringify(userMsgEvent));
-
-      const responseEvent = {
-        type: 'response.create',
-        response: {
-          modalities: ['text'],
-        },
-      };
-      dcRef.current.send(JSON.stringify(responseEvent));
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? `Failed to send message: ${err.message}`
-          : 'Failed to send message due to an unknown error.',
-      );
-    }
-  }, []);
-
-  const attemptReconnect = useCallback(() => {
-    cleanupConnection();
-    initConnection();
-  }, [cleanupConnection, initConnection]);
-
-  return {
-    connected,
-    error,
-    responseText,
-    sendMessage,
-    attemptReconnect,
-  };
+  return { connected, send };
 }

@@ -1,3 +1,5 @@
+@import 'highlight.js/styles/github.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -42,6 +44,7 @@ body {
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -84,5 +87,60 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Markdown Styling */
+  .markdown-content {
+    p {
+      @apply text-sm;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      @apply font-semibold;
+    }
+    h1 {
+      @apply text-2xl;
+    }
+    h2 {
+      @apply text-xl;
+    }
+    h3 {
+      @apply text-lg;
+    }
+
+    ul,
+    ol {
+      @apply list-inside list-disc pl-4 text-sm;
+    }
+
+    a {
+      @apply text-blue-600 hover:underline;
+    }
+
+    blockquote {
+      @apply border-l-4 border-border pl-4 text-sm italic;
+    }
+
+    pre {
+      @apply overflow-auto whitespace-pre-wrap rounded bg-background p-2 text-sm;
+    }
+
+    code {
+      @apply font-mono text-sm;
+    }
+
+    pre code {
+      @apply text-gray-800;
+    }
+
+    /* Additional spacing for code blocks */
+    code:not(pre > code) {
+      @apply rounded px-1 py-0.5;
+    }
   }
 }

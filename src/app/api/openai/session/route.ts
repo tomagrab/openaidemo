@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const voice = searchParams.get('voice') || 'verse';
+
   const res = await fetch('https://api.openai.com/v1/realtime/sessions', {
     method: 'POST',
     headers: {
@@ -9,7 +12,7 @@ export async function GET() {
     },
     body: JSON.stringify({
       model: 'gpt-4o-realtime-preview-2024-12-17',
-      voice: 'verse',
+      voice: voice,
     }),
     cache: 'no-store',
   });
