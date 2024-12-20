@@ -2,7 +2,18 @@ import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const voice = searchParams.get('voice') || 'verse';
+  const voiceParam = searchParams.get('voice');
+
+  const body: Record<string, string> = {
+    model: 'gpt-4o-realtime-preview-2024-12-17',
+  };
+  if (voiceParam) {
+    body.voice = voiceParam;
+  }
+
+  console.log('searchParams', searchParams);
+  console.log('voiceParam', voiceParam);
+  console.log('body', body);
 
   const res = await fetch('https://api.openai.com/v1/realtime/sessions', {
     method: 'POST',
@@ -10,10 +21,7 @@ export async function GET(req: Request) {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model: 'gpt-4o-realtime-preview-2024-12-17',
-      voice: voice,
-    }),
+    body: JSON.stringify(body),
     cache: 'no-store',
   });
 

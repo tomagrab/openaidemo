@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, FormEvent, useCallback, useEffect } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState, useEffect, FormEvent } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { SendIcon, VolumeOff, Volume2 } from 'lucide-react';
-import { MarkdownRenderer } from '@/components/layout/markdown/markdown-renderer/markdown-renderer';
-
+import { useRealtimeConnection } from '@/hooks/openai/use-realtime-connection/use-realtime-connection';
 import {
   Select,
   SelectTrigger,
@@ -14,11 +12,8 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-
-import { useRealtimeSession } from '@/hooks/openai/use-realtime-session/use-realtime-session';
-import { useRealtimeConnection } from '@/hooks/openai/use-realtime-connection/use-realtime-connection';
-import { useTextMessaging } from '@/hooks/openai/use-text-messaging/use-text-messaging';
-import { useAudioPlayback } from '@/hooks/openai/use-audio-playback/use-audio-playback';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { MarkdownRenderer } from '../../markdown/markdown-renderer/markdown-renderer';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,126 +22,44 @@ interface Message {
 
 export default function ChatClient() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [voiceMode, setVoiceMode] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('verse');
+  const [inputValue, setInputValue] = useState<string>('');
+  const [voiceMode, setVoiceMode] = useState<boolean>(false);
+  const [selectedVoice, setSelectedVoice] = useState<string>('verse');
 
-  // Session keys
-  const { ephemeralKey, sessionError, initSession } =
-    useRealtimeSession(selectedVoice);
+  const { connected, error, responseText, sendMessage, attemptReconnect } =
+    useRealtimeConnection({ voiceMode, selectedVoice });
 
-  // Track events and error handlers
-  const [currentStream, setCurrentStream] = useState<MediaStream | null>(null);
-  const handleTrack = useCallback((stream: MediaStream | null) => {
-    setCurrentStream(stream);
-  }, []);
-
-  const [connError, setConnError] = useState<string | null>(null);
-  const handleError = useCallback((err: string) => {
-    setConnError(err);
-  }, []);
-
-  const handleOpen = useCallback(() => {
-    setConnError(null);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    // connection closed
-  }, []);
-
-  // Only establish connection if we have an ephemeral key
-  const canConnect = ephemeralKey !== null && !sessionError;
-
-  // Text messaging logic
-  const handleFinalText = useCallback((finalText: string) => {
-    setMessages(prev => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === 'assistant') {
-        return [...prev.slice(0, -1), { ...last, content: finalText }];
-      } else {
-        return [...prev, { role: 'assistant', content: finalText }];
-      }
-    });
-  }, []);
-
-  const { sendMessage, handleMessageEvent, responseText } = useTextMessaging({
-    send: () => {},
-    onTextResponse: handleFinalText,
-  });
-
-  const handleConnectionMessage = useCallback(
-    (event: Record<string, unknown>) => {
-      handleMessageEvent(
-        event as {
-          type: 'response.text.delta' | 'response.done';
-          text?: string;
-        },
-      );
-    },
-    [handleMessageEvent],
-  );
-
-  const connectionInterface = useRealtimeConnection(
-    canConnect
-      ? {
-          ephemeralKey: ephemeralKey!,
-          voiceMode,
-          onTrack: handleTrack,
-          onMessage: handleConnectionMessage,
-          onError: handleError,
-          onOpen: handleOpen,
-          onClose: handleClose,
-        }
-      : {
-          ephemeralKey: null,
-          voiceMode: false,
-          onTrack: () => {},
-          onMessage: () => {},
-          onError: () => {},
-          onOpen: () => {},
-          onClose: () => {},
-        },
-  );
-
-  const { connected, send } = connectionInterface;
-
-  useEffect(() => {
-    sendMessage('', voiceMode);
-  }, [send, sendMessage, voiceMode]);
-
-  useEffect(() => {
-    if (responseText) {
-      setMessages(prev => {
-        const last = prev[prev.length - 1];
-        if (last && last.role === 'assistant') {
-          return [...prev.slice(0, -1), { ...last, content: responseText }];
-        } else {
-          return [...prev, { role: 'assistant', content: responseText }];
-        }
-      });
-    }
-  }, [responseText]);
-
-  useAudioPlayback(voiceMode, currentStream);
-
-  const error = connError || sessionError;
-
+  // Handle form submission: add a user message and send to the Realtime API
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = inputValue.trim();
     if (!trimmed) return;
 
     setMessages(prev => [...prev, { role: 'user', content: trimmed }]);
-    sendMessage(trimmed, voiceMode);
+    sendMessage(trimmed);
     setInputValue('');
   }
 
-  const attemptReconnect = () => {
-    initSession();
-  };
+  // Update assistant messages when responseText changes
+  useEffect(() => {
+    if (responseText && responseText.length > 0) {
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === 'assistant') {
+          return [
+            ...prev.slice(0, prev.length - 1),
+            { ...last, content: responseText },
+          ];
+        } else {
+          return [...prev, { role: 'assistant', content: responseText }];
+        }
+      });
+    }
+    // If responseText is empty, do nothing
+  }, [responseText]);
 
   return (
-    <div className="fixed bottom-8 right-8 flex h-[400px] w-[300px] flex-col rounded-lg border border-border shadow-lg">
+    <div className="fixed bottom-8 right-8 flex h-[600px] w-[400px] flex-col rounded-lg border border-border shadow-lg">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border p-2">
         <div className="text-sm font-semibold">Realtime Chat</div>
@@ -154,7 +67,7 @@ export default function ChatClient() {
           {/* Voice mode toggle */}
           <button
             onClick={() => setVoiceMode(prev => !prev)}
-            className="flex items-center justify-center rounded p-1"
+            className="flex items-center justify-center rounded p-2"
           >
             {voiceMode ? (
               <Volume2 className="h-4 w-4 text-gray-700" />
@@ -166,7 +79,10 @@ export default function ChatClient() {
           {/* Voice selection */}
           <Select
             value={selectedVoice}
-            onValueChange={value => setSelectedVoice(value)}
+            onValueChange={value => {
+              setSelectedVoice(value);
+              // After changing voice, user can click reconnect if needed
+            }}
           >
             <SelectTrigger className="w-24 text-sm">
               <SelectValue placeholder="Voice" />
@@ -176,7 +92,8 @@ export default function ChatClient() {
               <SelectItem value="ash">Ash</SelectItem>
               <SelectItem value="ballad">Ballad</SelectItem>
               <SelectItem value="coral">Coral</SelectItem>
-              <SelectItem value="echo sage">Echo Sage</SelectItem>
+              <SelectItem value="echo">Echo</SelectItem>
+              <SelectItem value="sage">Sage</SelectItem>
               <SelectItem value="shimmer">Shimmer</SelectItem>
               <SelectItem value="verse">Verse</SelectItem>
             </SelectContent>
@@ -187,9 +104,7 @@ export default function ChatClient() {
       {/* Body */}
       {!connected && !error && (
         <div className="flex flex-1 items-center justify-center p-4 text-sm text-gray-700">
-          {ephemeralKey === null
-            ? 'Fetching session...'
-            : 'Connecting to Realtime API... Please wait.'}
+          Connecting to Realtime API... Please wait.
         </div>
       )}
 
@@ -209,7 +124,7 @@ export default function ChatClient() {
               {messages.map((m, i) => (
                 <div
                   key={i}
-                  className={`max-w-[80%] rounded p-2 text-sm text-white ${
+                  className={`max-w-[80%] whitespace-pre-wrap rounded p-2 text-sm ${
                     m.role === 'user'
                       ? 'ml-auto self-end bg-blue-500 text-right'
                       : 'mr-auto self-start bg-green-500 text-left'
@@ -232,10 +147,9 @@ export default function ChatClient() {
             />
             <button
               type="submit"
-              disabled={!connected}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400"
             >
-              <SendIcon size={16} />
+              <SendIcon />
             </button>
           </form>
         </>

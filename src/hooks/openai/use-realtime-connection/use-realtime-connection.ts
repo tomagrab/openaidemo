@@ -1,84 +1,123 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
-interface UseRealtimeConnectionParams {
-  ephemeralKey: string | null;
+type useRealtimeConnectionProps = {
   voiceMode: boolean;
-  onTrack: (stream: MediaStream | null) => void;
-  onMessage: (event: Record<string, unknown>) => void; // Called when text events occur
-  onError: (err: string) => void;
-  onOpen: () => void;
-  onClose: () => void;
-}
+  selectedVoice: string;
+};
 
-/**
- * Manages the actual WebRTC PeerConnection and DataChannel.
- * Requires ephemeralKey to connect.
- * Not responsible for fetching keys or handling text/audio logic directly,
- * just sets up the connection and emits events.
- */
-export function useRealtimeConnection({
-  ephemeralKey,
-  voiceMode,
-  onTrack,
-  onMessage,
-  onError,
-  onOpen,
-  onClose,
-}: UseRealtimeConnectionParams) {
+export function useRealtimeConnection(
+  { voiceMode, selectedVoice }: useRealtimeConnectionProps = {
+    voiceMode: false,
+    selectedVoice: 'verse',
+  },
+) {
+  const [connected, setConnected] = useState(false);
+  const [responseText, setResponseText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const gotAudioTrackRef = useRef(false);
 
-  const [connected, setConnected] = useState(false);
+  const fetchNewEphemeralKey = useCallback(async () => {
+    const res = await fetch(
+      voiceMode
+        ? `/api/openai/session?voice=${encodeURIComponent(selectedVoice)}`
+        : '/api/openai/session',
+      { cache: 'no-store' },
+    );
 
-  const cleanup = useCallback(() => {
+    if (!res.ok) {
+      throw new Error('Failed to fetch ephemeral key');
+    }
+    const data = await res.json();
+    return data.client_secret.value;
+  }, [voiceMode, selectedVoice]);
+
+  const cleanupConnection = useCallback(() => {
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
     }
     dcRef.current = null;
+    gotAudioTrackRef.current = false;
+    if (audioRef.current) {
+      audioRef.current.srcObject = null;
+    }
     setConnected(false);
-    onTrack(null);
-  }, [onTrack]);
+  }, []);
 
   const initConnection = useCallback(async () => {
-    if (!ephemeralKey) return; // Wait until we have a key
+    setError(null);
+    setConnected(false);
 
     try {
-      cleanup();
+      // Always fetch a fresh ephemeral key to avoid expiration issues
+      const keyToUse = await fetchNewEphemeralKey();
+
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
+      let audioEl = audioRef.current;
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.autoplay = true;
+        audioRef.current = audioEl;
+      }
+      audioEl.srcObject = null;
+      gotAudioTrackRef.current = false;
+
       pc.ontrack = e => {
-        if (voiceMode && e.streams[0]) {
-          onTrack(e.streams[0]);
-        } else {
-          onTrack(null);
+        if (!gotAudioTrackRef.current && e.streams && e.streams[0]) {
+          audioEl.srcObject = e.streams[0];
+          gotAudioTrackRef.current = true;
         }
       };
 
-      // Only add local track if voiceMode is on
       if (voiceMode) {
         const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
         ms.getTracks().forEach(track => {
-          pc.addTrack(track, ms);
+          if (pc.signalingState !== 'closed') {
+            pc.addTrack(track, ms);
+          }
         });
       }
 
       const dc = pc.createDataChannel('oai-events');
       dcRef.current = dc;
 
-      dc.onopen = () => {
+      dc.addEventListener('open', () => {
         setConnected(true);
-        onOpen();
-      };
-      dc.onclose = () => {
+
+        // Send a session.update event to configure the session for text or voice+text
+        const sessionUpdate = {
+          type: 'session.update',
+          session: {
+            modalities: voiceMode ? ['text', 'audio'] : ['text'],
+            ...(voiceMode && { voice: selectedVoice }),
+          },
+        };
+
+        dc.send(JSON.stringify(sessionUpdate));
+      });
+
+      dc.addEventListener('close', () => {
         setConnected(false);
-        onClose();
-        onError('Data channel closed unexpectedly. Please reconnect.');
-      };
-      dc.onmessage = e => onMessage(JSON.parse(e.data));
+        setError('Data channel closed unexpectedly. Please reconnect.');
+      });
+
+      dc.addEventListener('message', e => {
+        const event = JSON.parse(e.data);
+        if (event.type === 'response.text.delta') {
+          setResponseText(prev => prev + event.delta);
+        } else if (event.type === 'response.done') {
+          // Don't add new lines for voice responses
+          setResponseText(prev => prev.trim());
+        }
+      });
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -90,7 +129,7 @@ export function useRealtimeConnection({
         method: 'POST',
         body: offer.sdp,
         headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
+          Authorization: `Bearer ${keyToUse}`,
           'Content-Type': 'application/sdp',
         },
       });
@@ -106,39 +145,78 @@ export function useRealtimeConnection({
         sdp: await sdpResponse.text(),
       };
       await pc.setRemoteDescription(answer);
-    } catch (err: Error | unknown) {
-      onError(
-        err instanceof Error ? err.message : 'Unknown error in initConnection',
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An unknown error occurred while connecting.',
       );
     }
-  }, [
-    ephemeralKey,
-    voiceMode,
-    onTrack,
-    onMessage,
-    onError,
-    onOpen,
-    onClose,
-    cleanup,
-  ]);
+  }, [fetchNewEphemeralKey, voiceMode, selectedVoice]);
 
   useEffect(() => {
     initConnection();
     return () => {
-      cleanup();
+      cleanupConnection();
     };
-  }, [initConnection, cleanup]);
+  }, [initConnection, cleanupConnection]);
 
-  const send = useCallback(
-    (msg: object) => {
-      if (!dcRef.current || dcRef.current.readyState !== 'open') {
-        onError('Data channel is not open. Please wait or reconnect.');
+  const sendMessage = useCallback(
+    (prompt: string) => {
+      if (!dcRef.current) {
+        setError('Data channel not established. Please reconnect.');
         return;
       }
-      dcRef.current.send(JSON.stringify(msg));
+
+      if (dcRef.current.readyState !== 'open') {
+        setError('Data channel is not open. Please wait or reconnect.');
+        return;
+      }
+
+      setResponseText('');
+
+      const userMsgEvent = {
+        type: 'conversation.item.create',
+        item: {
+          type: 'message',
+          role: 'user',
+          content: [{ type: 'input_text', text: prompt }],
+        },
+      };
+
+      try {
+        dcRef.current.send(JSON.stringify(userMsgEvent));
+
+        const responseEvent = {
+          type: 'response.create',
+          response: {
+            modalities: voiceMode ? ['text', 'audio'] : ['text'],
+            instructions:
+              "You are a helpful assistant. Respond to the user's message.",
+          },
+        };
+        dcRef.current.send(JSON.stringify(responseEvent));
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error
+            ? `Failed to send message: ${err.message}`
+            : 'Failed to send message due to an unknown error.',
+        );
+      }
     },
-    [onError],
+    [voiceMode],
   );
 
-  return { connected, send };
+  const attemptReconnect = useCallback(() => {
+    cleanupConnection();
+    initConnection();
+  }, [cleanupConnection, initConnection]);
+
+  return {
+    connected,
+    error,
+    responseText,
+    sendMessage,
+    attemptReconnect,
+  };
 }
