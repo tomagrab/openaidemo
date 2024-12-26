@@ -2,65 +2,94 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-type useRealtimeConnectionProps = {
-  voiceMode: boolean;
-  selectedVoice: string;
+// Constants for clarity
+const BASE_APP_URL = process.env.NEXT_PUBLIC_BASE_APP_URL;
+const BASE_EPH_KEY_URL = '/api/openai/session';
+const BASE_REALTIME_URL = 'https://api.openai.com/v1/realtime';
+const MODEL_ID = 'gpt-4o-realtime-preview-2024-12-17';
+const DATA_CHANNEL_LABEL = 'oai-events';
+
+interface RealtimeConnectionHook {
+  loading: boolean;
+  connected: boolean;
+  error: string | null;
+  responseText: string;
+  sendMessage: (prompt: string) => void;
+  attemptReconnect: () => void;
+}
+
+type ServerEvent = {
+  type: string;
+  [key: string]: string | number | boolean | object | null | undefined;
 };
 
-export function useRealtimeConnection(
-  { voiceMode, selectedVoice }: useRealtimeConnectionProps = {
-    voiceMode: false,
-    selectedVoice: 'verse',
-  },
-) {
+const buildSessionUrl = (voiceMode: boolean, selectedVoice: string) => {
+  const url = new URL(BASE_EPH_KEY_URL, BASE_APP_URL);
+
+  // Clear existing search params each time to avoid stacking them
+  url.searchParams.delete('modalities');
+  url.searchParams.delete('voice');
+  url.searchParams.delete('voice');
+
+  // If voiceMode is enabled, add audio and text modalities
+  if (voiceMode) {
+    url.searchParams.append('modalities', 'audio');
+    url.searchParams.append('modalities', 'text');
+    url.searchParams.set('voice', selectedVoice);
+  } else {
+    url.searchParams.append('modalities', 'text');
+  }
+
+  return url;
+};
+
+const fetchEphemeralKey = async (
+  voiceMode: boolean,
+  selectedVoice: string,
+): Promise<string> => {
+  const reqUrl = buildSessionUrl(voiceMode, selectedVoice);
+
+  const res = await fetch(reqUrl, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error('Failed to fetch ephemeral key');
+  }
+  const data = await res.json();
+  return data.client_secret.value;
+};
+
+export function useRealtimeConnection({
+  voiceMode,
+  selectedVoice,
+}: {
+  voiceMode: boolean;
+  selectedVoice: string;
+}): RealtimeConnectionHook {
+  const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
   const [responseText, setResponseText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const gotAudioTrackRef = useRef(false);
+  // const audioRef = useRef<HTMLAudioElement | null>(null);
+  // const gotAudioTrackRef = useRef(false);
 
-  const fetchNewEphemeralKey = useCallback(async () => {
-    const res = await fetch(
-      voiceMode
-        ? `/api/openai/session?voice=${encodeURIComponent(selectedVoice)}`
-        : '/api/openai/session',
-      { cache: 'no-store' },
-    );
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch ephemeral key');
-    }
-    const data = await res.json();
-    return data.client_secret.value;
-  }, [voiceMode, selectedVoice]);
-
-  const cleanupConnection = useCallback(() => {
-    if (pcRef.current) {
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-    dcRef.current = null;
-    gotAudioTrackRef.current = false;
-    if (audioRef.current) {
-      audioRef.current.srcObject = null;
-    }
-    setConnected(false);
-  }, []);
-
+  /**
+   * Initializes the peer connection, data channel, local media, etc.
+   */
   const initConnection = useCallback(async () => {
+    setLoading(true);
     setError(null);
     setConnected(false);
 
     try {
-      // Always fetch a fresh ephemeral key to avoid expiration issues
-      const keyToUse = await fetchNewEphemeralKey();
+      const ephemeralKey = await fetchEphemeralKey(voiceMode, selectedVoice);
 
+      // Create PeerConnection
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
+      /*       // Setup or reuse an <audio> for remote track
       let audioEl = audioRef.current;
       if (!audioEl) {
         audioEl = document.createElement('audio');
@@ -70,38 +99,30 @@ export function useRealtimeConnection(
       audioEl.srcObject = null;
       gotAudioTrackRef.current = false;
 
-      pc.ontrack = e => {
-        if (!gotAudioTrackRef.current && e.streams && e.streams[0]) {
-          audioEl.srcObject = e.streams[0];
+      // Handle remote track (the model's audio)
+      pc.ontrack = event => {
+        if (!gotAudioTrackRef.current && event.streams && event.streams[0]) {
+          audioEl!.srcObject = event.streams[0];
           gotAudioTrackRef.current = true;
         }
       };
 
-      if (voiceMode) {
-        const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-        ms.getTracks().forEach(track => {
-          if (pc.signalingState !== 'closed') {
-            pc.addTrack(track, ms);
-          }
-        });
-      }
+      // Add local audio track from microphone
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      localStream.getTracks().forEach(track => {
+        if (pc.signalingState !== 'closed') {
+          pc.addTrack(track, localStream);
+        }
+      }); */
 
-      const dc = pc.createDataChannel('oai-events');
+      // Create data channel for sending/receiving events
+      const dc = pc.createDataChannel(DATA_CHANNEL_LABEL);
       dcRef.current = dc;
 
       dc.addEventListener('open', () => {
         setConnected(true);
-
-        // Send a session.update event to configure the session for text or voice+text
-        const sessionUpdate = {
-          type: 'session.update',
-          session: {
-            modalities: voiceMode ? ['text', 'audio'] : ['text'],
-            ...(voiceMode && { voice: selectedVoice }),
-          },
-        };
-
-        dc.send(JSON.stringify(sessionUpdate));
       });
 
       dc.addEventListener('close', () => {
@@ -109,30 +130,31 @@ export function useRealtimeConnection(
         setError('Data channel closed unexpectedly. Please reconnect.');
       });
 
+      // Message handler for server -> client events
       dc.addEventListener('message', e => {
-        const event = JSON.parse(e.data);
-        if (event.type === 'response.text.delta') {
-          setResponseText(prev => prev + event.delta);
-        } else if (event.type === 'response.done') {
-          // Don't add new lines for voice responses
-          setResponseText(prev => prev.trim());
+        try {
+          const event = JSON.parse(e.data);
+          handleServerEvent(event);
+        } catch (err) {
+          console.error('Failed to parse server event', err);
         }
       });
 
+      // Actually start the SDP handshake
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const baseUrl = 'https://api.openai.com/v1/realtime';
-      const model = 'gpt-4o-realtime-preview-2024-12-17';
-
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
-        method: 'POST',
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${keyToUse}`,
-          'Content-Type': 'application/sdp',
+      const sdpResponse = await fetch(
+        `${BASE_REALTIME_URL}?model=${MODEL_ID}`,
+        {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            'Content-Type': 'application/sdp',
+          },
         },
-      });
+      );
 
       if (!sdpResponse.ok) {
         throw new Error(
@@ -151,68 +173,101 @@ export function useRealtimeConnection(
           ? err.message
           : 'An unknown error occurred while connecting.',
       );
+    } finally {
+      setLoading(false);
     }
-  }, [fetchNewEphemeralKey, voiceMode, selectedVoice]);
+  }, [voiceMode, selectedVoice]);
 
+  /**
+   * Handle server events (JSON messages) from the Realtime API.
+   */
+  function handleServerEvent(event: ServerEvent) {
+    setLoading(true);
+    switch (event.type) {
+      case 'response.text.delta':
+        // Stream partial text
+        setResponseText(prev => prev + (event.delta || ''));
+        break;
+
+      case 'response.done':
+        // End of response
+        setResponseText(prev => prev + (event.text || ''));
+        break;
+
+      // Handle other event types as needed
+      // e.g. 'error', 'conversation.item.created', etc.
+
+      default:
+        // No-op or debug
+        // console.log('Unhandled server event:', event);
+        break;
+    }
+    setLoading(false);
+  }
+
+  /**
+   * Sends a user message (prompt) to the Realtime API via the data channel.
+   */
+  const sendMessage = useCallback((prompt: string) => {
+    setLoading(true);
+    if (!dcRef.current) {
+      setError('Data channel not established. Please reconnect.');
+      return;
+    }
+
+    if (dcRef.current.readyState !== 'open') {
+      setError('Data channel is not open. Please wait or reconnect.');
+      return;
+    }
+
+    // Clear old response text for a fresh start
+    setResponseText('');
+
+    const userMsgEvent = {
+      type: 'conversation.item.create',
+      item: {
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text: prompt }],
+      },
+    };
+
+    const responseEvent = {
+      type: 'response.create',
+      response: {
+        modalities: ['text'],
+      },
+    };
+
+    try {
+      dcRef.current.send(JSON.stringify(userMsgEvent));
+      dcRef.current.send(JSON.stringify(responseEvent));
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? `Failed to send message: ${err.message}`
+          : 'Failed to send message due to an unknown error.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Attempt to reconnect by tearing down the current connection
+   * and re-initializing.
+   */
+  const attemptReconnect = useCallback(() => {
+    initConnection();
+  }, [initConnection]);
+
+  // Initialize connection on mount
   useEffect(() => {
     initConnection();
-    return () => {
-      cleanupConnection();
-    };
-  }, [initConnection, cleanupConnection]);
-
-  const sendMessage = useCallback(
-    (prompt: string) => {
-      if (!dcRef.current) {
-        setError('Data channel not established. Please reconnect.');
-        return;
-      }
-
-      if (dcRef.current.readyState !== 'open') {
-        setError('Data channel is not open. Please wait or reconnect.');
-        return;
-      }
-
-      setResponseText('');
-
-      const userMsgEvent = {
-        type: 'conversation.item.create',
-        item: {
-          type: 'message',
-          role: 'user',
-          content: [{ type: 'input_text', text: prompt }],
-        },
-      };
-
-      try {
-        dcRef.current.send(JSON.stringify(userMsgEvent));
-
-        const responseEvent = {
-          type: 'response.create',
-          response: {
-            modalities: voiceMode ? ['text', 'audio'] : ['text'],
-            instructions:
-              "You are a helpful assistant. Respond to the user's message.",
-          },
-        };
-        dcRef.current.send(JSON.stringify(responseEvent));
-      } catch (err: unknown) {
-        setError(
-          err instanceof Error
-            ? `Failed to send message: ${err.message}`
-            : 'Failed to send message due to an unknown error.',
-        );
-      }
-    },
-    [voiceMode],
-  );
-
-  const attemptReconnect = useCallback(() => {
-    cleanupConnection();
-    initConnection();
-  }, [cleanupConnection, initConnection]);
+  }, [initConnection]);
 
   return {
+    loading,
     connected,
     error,
     responseText,
