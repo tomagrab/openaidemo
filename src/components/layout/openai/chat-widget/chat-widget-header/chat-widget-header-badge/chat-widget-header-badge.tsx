@@ -19,9 +19,9 @@ export default function ChatWidgetHeaderBadge({
 
   const badgeClassName = cn(
     'text-white',
-    isConnected ? 'bg-green-500' : '',
-    isLoading ? 'bg-yellow-500 flex gap-2' : '',
-    isError ? 'bg-red-500' : '',
+    isConnected ? 'bg-green-500 hover:bg-green-500' : '',
+    isLoading ? 'bg-yellow-500 hover:bg-yellow-500 flex gap-2' : '',
+    isError ? 'bg-red-500 hover:bg-red-500' : '',
   );
 
   const badgeText = isConnected ? (

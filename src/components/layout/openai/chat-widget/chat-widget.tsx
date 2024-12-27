@@ -19,6 +19,7 @@ export default function ChatWidget() {
     micAccessError,
     connectionError,
     retryEphemeralKey,
+    refreshPage,
 
     sessionLoading,
     rtcLoading,
@@ -49,6 +50,7 @@ export default function ChatWidget() {
       <ChatWidgetBody
         combinedError={combinedError}
         retryEphemeralKey={retryEphemeralKey}
+        refreshPage={refreshPage}
         micAccessError={micAccessError}
         messages={messages}
         bottomRef={bottomRef}

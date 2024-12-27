@@ -280,6 +280,10 @@ export function useRealtimeAPI() {
     createSession();
   }, [createSession, resetMutation]);
 
+  const refreshPage = useCallback(() => {
+    window.location.reload();
+  }, []);
+
   // 5c) once ephemeral key arrives, store it
   useEffect(() => {
     if (sessionData) {
@@ -317,7 +321,11 @@ export function useRealtimeAPI() {
       let localStream: MediaStream;
       try {
         localStream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
         });
       } catch (err) {
         console.error('Failed to get local audio stream:', err);
@@ -384,6 +392,7 @@ export function useRealtimeAPI() {
     micAccessError,
     connectionError,
     retryEphemeralKey,
+    refreshPage,
     sessionLoading,
     rtcLoading,
 

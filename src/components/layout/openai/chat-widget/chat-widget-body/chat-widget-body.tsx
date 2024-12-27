@@ -5,6 +5,7 @@ import { ChatMessage } from '@/lib/types/openai/openai';
 type ChatWidgetBodyProps = {
   combinedError: object | null;
   retryEphemeralKey: () => void;
+  refreshPage: () => void;
   micAccessError: string | null;
   messages: ChatMessage[];
   bottomRef: React.RefObject<HTMLDivElement | null>;
@@ -13,6 +14,7 @@ type ChatWidgetBodyProps = {
 export default function ChatWidgetBody({
   combinedError,
   retryEphemeralKey,
+  refreshPage,
   micAccessError,
   messages,
   bottomRef,
@@ -20,15 +22,28 @@ export default function ChatWidgetBody({
   return (
     <div className="flex-1 space-y-3 overflow-y-auto p-3">
       {combinedError ? (
-        <div className="p-4 text-red-500">
-          <p>Error: {combinedError?.toString()}</p>
-          <Button onClick={retryEphemeralKey}>Retry connection</Button>
-          {micAccessError && (
-            <div className="mt-2">
-              Please enable microphone access in your browser settings and try
-              again.
-            </div>
-          )}
+        <div className="rounded bg-red-500 p-3 text-white">
+          <p>
+            You are receiving the following error: {combinedError?.toString()}
+          </p>
+          {micAccessError ? (
+            <p>
+              You are also receiving the following microphone access error:{' '}
+              {micAccessError}
+            </p>
+          ) : null}
+          <p>
+            Sometimes errors like these are triggered erroneously. Retrying the
+            connection or refreshing the page may resolve the issue.
+          </p>
+          <div className="flex justify-between pt-2">
+            <Button variant={'default'} onClick={retryEphemeralKey}>
+              Retry connection
+            </Button>
+            <Button variant={'destructive'} onClick={refreshPage}>
+              Refresh page
+            </Button>
+          </div>
         </div>
       ) : null}
 
