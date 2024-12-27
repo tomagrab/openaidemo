@@ -22,12 +22,7 @@ export default function ChatWidgetBody({
       {combinedError ? (
         <div className="p-4 text-red-500">
           <p>Error: {combinedError?.toString()}</p>
-          <Button
-            onClick={retryEphemeralKey}
-            className="mt-2 rounded bg-blue-600 px-3 py-2 text-white hover:bg-blue-700"
-          >
-            Retry
-          </Button>
+          <Button onClick={retryEphemeralKey}>Retry connection</Button>
           {micAccessError && (
             <div className="mt-2">
               Please enable microphone access in your browser settings and try

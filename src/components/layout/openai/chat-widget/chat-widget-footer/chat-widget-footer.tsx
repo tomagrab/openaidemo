@@ -48,7 +48,7 @@ export default function ChatWidgetFooter({
             !!combinedError
           }
           onClick={handleSend}
-          className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700"
+          className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-600 disabled:opacity-50"
         >
           <SendIcon />
         </button>

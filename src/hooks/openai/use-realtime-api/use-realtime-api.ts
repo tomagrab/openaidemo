@@ -48,7 +48,9 @@ export function useRealtimeAPI() {
   // Refs for PeerConnection, DataChannel, local mic stream
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const gotAudioTrackRef = useRef(false);
 
   /************************************************
    * Utility: parse JSON-like text if present
@@ -295,28 +297,40 @@ export function useRealtimeAPI() {
       pc = new RTCPeerConnection();
 
       // remote audio: create <audio>, attach ontrack
-      const audioEl = document.createElement('audio');
-      audioEl.autoplay = true;
-      pc.ontrack = e => {
-        audioEl.srcObject = e.streams[0];
+      let audioEl = audioRef.current;
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.autoplay = true;
+        audioRef.current = audioEl;
+      }
+      audioEl.srcObject = null;
+      gotAudioTrackRef.current = false;
+
+      pc.ontrack = event => {
+        // When the model sends an audio track, attach it to <audio>
+        if (!gotAudioTrackRef.current && event.streams && event.streams[0]) {
+          audioEl!.srcObject = event.streams[0];
+          gotAudioTrackRef.current = true;
+        }
       };
 
+      let localStream: MediaStream;
       try {
-        // Create a local stream for audio
-        const localStream = await navigator.mediaDevices.getUserMedia({
+        localStream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
-
-        // Add local audio track to peer connection
-        localStream.getTracks().forEach(track => {
-          pc?.addTrack(track, localStream);
-        });
-
-        localStreamRef.current = localStream;
       } catch (err) {
         console.error('Failed to get local audio stream:', err);
         setMicAccessError('Failed to access microphone');
+        return;
       }
+
+      // Add local audio track to peer connection
+      localStream.getTracks().forEach(track => {
+        pc?.addTrack(track, localStream);
+      });
+
+      localStreamRef.current = localStream;
 
       pcRef.current = pc;
 
