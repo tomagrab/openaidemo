@@ -1,27 +1,5 @@
+import { RealtimeAPISession } from '@/lib/types/openai/openai';
 import { NextResponse } from 'next/server';
-
-type RealtimeAPISession = {
-  id: string;
-  object: string;
-  model: string;
-  modalities: string[];
-  instructions: string;
-  voice: string;
-  input_audio_format: string;
-  output_audio_format: string;
-  input_audio_transcription: {
-    model: string;
-  };
-  turn_detection?: string;
-  tools?: string[];
-  tool_choice: string;
-  temperature: number;
-  max_response_output_tokens: number;
-  client_secret: {
-    value: string;
-    expires_at: number;
-  };
-};
 
 export async function POST() {
   const openAiApiKey = process.env.OPENAI_API_KEY;
@@ -33,6 +11,7 @@ export async function POST() {
   }
 
   try {
+    // Create a Realtime session with text-only by default (no 'voice' param)
     const resp = await fetch('https://api.openai.com/v1/realtime/sessions', {
       method: 'POST',
       headers: {
@@ -40,8 +19,9 @@ export async function POST() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-realtime-preview-2024-12-17',
-        voice: 'verse',
+        model: process.env.NEXT_PUBLIC_REALTIME_DEFAULT_MODEL,
+        modalities: ['text'],
+        instructions: process.env.NEXT_PUBLIC_REALTIME_DEFAULT_INSTRUCTIONS,
       }),
     });
 

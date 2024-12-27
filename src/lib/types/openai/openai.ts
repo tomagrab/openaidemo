@@ -13,6 +13,29 @@ export type EphemeralKey = {
   };
 };
 
+export type RealtimeAPISession = {
+  id: string;
+  object: string;
+  model: string;
+  modalities: string[];
+  instructions: string;
+  voice: string;
+  input_audio_format: string;
+  output_audio_format: string;
+  input_audio_transcription: {
+    model: string;
+  };
+  turn_detection?: string;
+  tools?: string[];
+  tool_choice: string;
+  temperature: number;
+  max_response_output_tokens: number;
+  client_secret: {
+    value: string;
+    expires_at: number;
+  };
+};
+
 export type BaseRealtimeEvent = {
   type: string;
   event_id: string;
@@ -54,3 +77,7 @@ export type RealtimeServerEvent =
   | RealtimeFunctionCallDeltaEvent
   | RealtimeFileSearchResultsEvent
   | (BaseRealtimeEvent & Record<string, unknown>);
+
+export type turn_detection = {
+  type: 'server_vad';
+} | null;
