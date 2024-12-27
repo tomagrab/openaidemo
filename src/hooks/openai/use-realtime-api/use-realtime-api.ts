@@ -39,6 +39,7 @@ export function useRealtimeAPI() {
   const [turnDetection, setTurnDetection] = useState<turn_detection>(null); // OFF by default
   const [userInput, setUserInput] = useState('');
   const [rtcLoading, setRtcLoading] = useState(false);
+  const [isResponseInProgress, setIsResponseInProgress] = useState(false);
 
   const [micAccessError, setMicAccessError] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -94,6 +95,7 @@ export function useRealtimeAPI() {
   const handleResponseDone = useCallback((evt: RealtimeResponseDoneEvent) => {
     console.log('handleResponseDone', evt);
     setFunctionCallBuffer('');
+    setIsResponseInProgress(false);
   }, []);
 
   // c) handleFunctionCallDelta
@@ -130,6 +132,9 @@ export function useRealtimeAPI() {
       }
 
       switch (parsed.type) {
+        case 'response.created':
+          setIsResponseInProgress(true);
+          break;
         case 'response.text.delta':
           handleDelta(parsed as RealtimeTextDeltaEvent);
           break;
@@ -361,14 +366,15 @@ export function useRealtimeAPI() {
     handleSend,
     turnDetection,
     toggleVADMode,
-
     sessionError,
     micAccessError,
     connectionError,
     retryEphemeralKey,
-
     sessionLoading,
     rtcLoading,
+
+    // **NEW** -> We expose if the model is generating a response
+    isResponseInProgress,
 
     updateSession,
     functionCallBuffer,
