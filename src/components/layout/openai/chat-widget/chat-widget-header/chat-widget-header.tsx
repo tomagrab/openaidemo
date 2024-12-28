@@ -7,9 +7,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Volume2Icon, VolumeOffIcon } from 'lucide-react';
+import { Volume2Icon, VolumeOffIcon, MinusIcon } from 'lucide-react';
 
 type ChatWidgetHeaderProps = {
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   turnDetection: turn_detection;
   toggleVADMode: () => Promise<void>;
   sessionLoading: boolean;
@@ -18,6 +19,7 @@ type ChatWidgetHeaderProps = {
 };
 
 export default function ChatWidgetHeader({
+  setOpen,
   turnDetection,
   toggleVADMode,
   sessionLoading,
@@ -57,6 +59,14 @@ export default function ChatWidgetHeader({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      <button
+        className="text-muted-foreground hover:text-foreground"
+        onClick={() => setOpen(false)}
+        title="Minimize chat"
+      >
+        <MinusIcon className="h-5 w-5" />
+      </button>
     </div>
   );
 }
