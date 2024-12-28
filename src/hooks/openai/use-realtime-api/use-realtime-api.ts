@@ -182,9 +182,8 @@ export function useRealtimeAPI() {
             console.log('Unhandled function call:', fnCall);
             break;
         }
-
-        setIsResponseInProgress(false);
       }
+      setIsResponseInProgress(false);
     },
     [setHeaderEmoji, setTheme, setHomePageContent],
   );
@@ -206,6 +205,10 @@ export function useRealtimeAPI() {
     },
     [],
   );
+
+  const refreshPage = useCallback(() => {
+    window.location.reload();
+  }, []);
 
   // single entry for data channel messages
   const handleDataChannelMessage = useCallback(
@@ -259,11 +262,19 @@ export function useRealtimeAPI() {
         case 'session.updated':
           console.log('[Session updated event]', parsed);
           break;
+        case 'error':
+          if (parsed.code === 'session_expired') {
+            console.error('Session expired, refreshing...');
+            refreshPage();
+          } else {
+            console.error('[Error event]', parsed);
+          }
         default:
           console.log('[Unhandled event]', parsed);
       }
     },
     [
+      refreshPage,
       handleDelta,
       handleResponseDone,
       handleFunctionCallDelta,
@@ -372,10 +383,6 @@ export function useRealtimeAPI() {
     resetMutation();
     createSession();
   }, [createSession, resetMutation]);
-
-  const refreshPage = useCallback(() => {
-    window.location.reload();
-  }, []);
 
   // 5c) once ephemeral key arrives, store it
   useEffect(() => {

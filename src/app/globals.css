@@ -89,8 +89,10 @@ body {
     @apply bg-background text-foreground;
   }
 
-  li::marker {
-    @apply hidden;
+  .message-bubble {
+    .markdown-content {
+      @apply min-w-[20ch] max-w-[25ch];
+    }
   }
 
   /* Markdown Styling */
@@ -119,7 +121,15 @@ body {
 
     ul,
     ol {
-      @apply list-inside list-disc pl-4 text-sm;
+      @apply pl-4 text-sm;
+    }
+
+    ul {
+      @apply list-disc;
+    }
+
+    ol {
+      @apply list-decimal;
     }
 
     a {

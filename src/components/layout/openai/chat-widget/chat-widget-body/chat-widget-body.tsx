@@ -51,11 +51,11 @@ export default function ChatWidgetBody({
       {messages.map(msg => (
         <div key={msg.id} className="flex flex-1 flex-col p-4">
           {msg.role === 'user' ? (
-            <div className="flex max-w-min justify-end self-end rounded bg-blue-500 p-2">
+            <div className="message-bubble flex max-w-min justify-end self-end rounded bg-blue-500 p-2">
               <MarkdownRenderer content={msg.content} />
             </div>
           ) : (
-            <div className="flex max-w-min justify-start self-start rounded bg-green-500 p-2">
+            <div className="message-bubble flex max-w-min justify-start self-start rounded bg-green-500 p-2">
               <MarkdownRenderer content={msg.content} />
             </div>
           )}

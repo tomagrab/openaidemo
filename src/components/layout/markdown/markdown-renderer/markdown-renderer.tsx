@@ -14,7 +14,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeHighlight]}
-      className={`markdown-content min-w-[20ch] max-w-[25ch]`}
+      className={`markdown-content`}
     >
       {content}
     </ReactMarkdown>

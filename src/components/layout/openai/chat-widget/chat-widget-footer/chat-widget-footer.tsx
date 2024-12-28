@@ -45,7 +45,8 @@ export default function ChatWidgetFooter({
             isResponseInProgress ||
             sessionLoading ||
             rtcLoading ||
-            !!combinedError
+            !!combinedError ||
+            !userInput
           }
           onClick={handleSend}
           className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-600 disabled:opacity-50"

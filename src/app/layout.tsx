@@ -33,13 +33,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ClientProvider>
-          <OpenAIDemoProvider>
-            <ThemeProvider
-              attribute={`class`}
-              defaultTheme={`system`}
-              enableSystem={true}
-              disableTransitionOnChange={true}
-            >
+          <ThemeProvider
+            attribute={`class`}
+            defaultTheme={`system`}
+            enableSystem={true}
+            disableTransitionOnChange={true}
+          >
+            <OpenAIDemoProvider>
               <div className="flex min-h-screen flex-col">
                 <Header />
                 <div className="flex h-[calc(100dvh-4rem)] flex-col">
@@ -49,8 +49,8 @@ export default function RootLayout({
                 </div>
                 <ChatWidget />
               </div>
-            </ThemeProvider>
-          </OpenAIDemoProvider>
+            </OpenAIDemoProvider>
+          </ThemeProvider>
         </ClientProvider>
       </body>
     </html>
