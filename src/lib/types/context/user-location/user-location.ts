@@ -1,5 +1,9 @@
 export type userLocation = {
   lat: number;
   lon: number;
-  reverseGeocodingData?: unknown;
+  reverseGeocodingData?: {
+    county: string;
+    city: string;
+    state: string;
+  };
 };

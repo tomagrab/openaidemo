@@ -1,14 +1,12 @@
 'use client';
 
-import React, { JSX, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import DataTable from '@/components/ui/data-table'; // or wherever your DataTable is located
 import { Checkbox } from '@/components/ui/checkbox';
 import DataTableColumnHeader from '@/components/ui/data-table-column-header';
 import { WeatherResponse } from '@/lib/types/open-meteo/weather-api/weather-api';
-
-// For icons
-import { SunIcon, SnowflakeIcon, CloudIcon, CloudRainIcon } from 'lucide-react';
+import GetWeatherIcon from '@/lib/utilities/open-meteo/weather/get-weather-icon/get-weather-icon';
 
 /**
  * 1) We'll define a row type so your DataTable can reference known fields:
@@ -21,19 +19,6 @@ type DailyForecastRow = {
   tempMax: number; // daily.temperature2mMax[i]
   precipitation: number; // daily.precipitationSum[i] (in mm)
 };
-
-/**
- * 2) A helper function to map a numeric `weatherCode` to an icon.
- *    This is just a rough example. Expand or customize as desired.
- */
-function getWeatherIcon(code: number): JSX.Element {
-  // For demonstration:
-  if (code === 0) return <SunIcon className="h-4 w-4 text-yellow-500" />;
-  if (code < 50) return <CloudIcon className="h-4 w-4 text-gray-500" />;
-  if (code < 60) return <CloudRainIcon className="h-4 w-4 text-blue-400" />;
-  if (code < 80) return <SnowflakeIcon className="h-4 w-4 text-sky-600" />;
-  return <CloudIcon className="h-4 w-4 text-gray-500" />;
-}
 
 /**
  * 3) The column definitions:
@@ -136,7 +121,7 @@ const columns: ColumnDef<DailyForecastRow>[] = [
       const code = row.original.weatherCode;
       return (
         <span className="flex flex-col items-center justify-center">
-          {getWeatherIcon(code)}
+          {GetWeatherIcon(code)}
         </span>
       );
     },

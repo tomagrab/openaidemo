@@ -16,7 +16,7 @@ import { setHomePageContentDefinition } from '@/lib/function-calls/definitions/s
 import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
 import { tryParseJson } from '@/lib/utilities/json/try-parse-json/try-parse-json';
 import { useCreateSession } from '@/hooks/openai/use-create-session/use-create-session';
-import { handleFunctionCall } from '@/lib/utilities/realtime/handle-function-call/handle-function-call';
+import { handleFunctionCall } from '@/lib/utilities/openai/realtime/handle-function-call/handle-function-call';
 
 export function useRealtimeAPI() {
   // 1) React Query ephemeral key creation
