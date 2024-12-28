@@ -17,6 +17,7 @@ import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-d
 import { tryParseJson } from '@/lib/utilities/json/try-parse-json/try-parse-json';
 import { useCreateSession } from '@/hooks/openai/use-create-session/use-create-session';
 import { handleFunctionCall } from '@/lib/utilities/openai/realtime/handle-function-call/handle-function-call';
+import { getWeatherDefinition } from '@/lib/function-calls/definitions/get-weather-definition/get-weather-definition';
 
 export function useRealtimeAPI() {
   // 1) React Query ephemeral key creation
@@ -59,8 +60,13 @@ export function useRealtimeAPI() {
   const localStreamRef = useRef<MediaStream | null>(null);
   const gotAudioTrackRef = useRef(false);
 
-  const { setHeaderEmoji, setTheme, setHomePageContent } =
-    useOpenAIDemoContext();
+  const {
+    setHeaderEmoji,
+    setTheme,
+    setHomePageContent,
+    setUserLocation,
+    setWeatherData,
+  } = useOpenAIDemoContext();
 
   /************************************************
    * 3) Handlers for Realtime events
@@ -93,16 +99,25 @@ export function useRealtimeAPI() {
       const fnCall = outputItems.find(item => item.type === 'function_call');
       if (fnCall) {
         handleFunctionCall(
+          dcRef,
           fnCall,
           setHeaderEmoji,
           setTheme,
           setHomePageContent,
+          setUserLocation,
+          setWeatherData,
         );
       }
 
       setIsResponseInProgress(false);
     },
-    [setHeaderEmoji, setTheme, setHomePageContent],
+    [
+      setHeaderEmoji,
+      setTheme,
+      setHomePageContent,
+      setUserLocation,
+      setWeatherData,
+    ],
   );
 
   // c) handleFunctionCallDelta
@@ -170,6 +185,7 @@ export function useRealtimeAPI() {
                   setHeaderEmojiDefinition,
                   setThemeDefinition,
                   setHomePageContentDefinition,
+                  getWeatherDefinition,
                 ],
                 tool_choice: 'auto',
               },

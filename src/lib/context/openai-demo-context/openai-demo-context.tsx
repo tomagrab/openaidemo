@@ -1,6 +1,7 @@
 'use client';
 
 import { userLocation } from '@/lib/types/context/user-location/user-location';
+import { WeatherResponse } from '@/lib/types/open-meteo/weather-api/weather-api';
 import { useTheme } from 'next-themes';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
@@ -16,6 +17,9 @@ type OpenAIDemoContextValue = {
 
   userLocation: userLocation | null;
   setUserLocation: React.Dispatch<React.SetStateAction<userLocation | null>>;
+
+  weatherData: WeatherResponse | null;
+  setWeatherData: React.Dispatch<React.SetStateAction<WeatherResponse | null>>;
 };
 
 const OpenAIDemoContext = createContext<OpenAIDemoContextValue | undefined>(
@@ -30,27 +34,20 @@ export function OpenAIDemoProvider({ children }: OpenAIDemoProviderProps) {
   const [headerEmoji, setHeaderEmoji] = useState<string | null>(null);
   const [homePageContent, setHomePageContent] = useState<string>(
     `
-# Welcome to the OpenAI Demo
-
-This is a demo of using OpenAI's API to create a chat widget and a home page with Markdown content.
-
-## Features
-
-- Chat widget with voice detection
-- Light and dark themes
-- Markdown-rendered home page
-
-## Usage
-
-1. Click on the chat widget to start a conversation.
-2. Type your message and press Enter to send.
-3. Click the microphone icon to enable voice detection.
-
-Enjoy! 🚀
+<div>
+  <h1>Welcome to the OpenAI Demo</h1>
+  <p>
+    This is a simple demo of how you can use OpenAI's GPT-3 API in your
+    projects. You can interact with the AI assistant and see how it can
+    generate text for you.
+  </p>
+</div>
+hello
     `,
   );
 
   const [userLocation, setUserLocation] = useState<userLocation | null>(null);
+  const [weatherData, setWeatherData] = useState<WeatherResponse | null>(null);
 
   const { theme, setTheme } = useTheme();
 
@@ -63,6 +60,8 @@ Enjoy! 🚀
     setHomePageContent,
     userLocation,
     setUserLocation,
+    weatherData,
+    setWeatherData,
   };
 
   // 6) Return the provider
