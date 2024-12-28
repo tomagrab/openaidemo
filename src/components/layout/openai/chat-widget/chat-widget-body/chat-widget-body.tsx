@@ -2,12 +2,15 @@ import { MarkdownRenderer } from '@/components/layout/markdown/markdown-renderer
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage } from '@/lib/types/openai/openai';
+import { cn } from '@/lib/utils';
+import { LoaderIcon } from 'lucide-react';
 
 type ChatWidgetBodyProps = {
   combinedError: object | null;
   retryEphemeralKey: () => void;
   refreshPage: () => void;
   micAccessError: string | null;
+  loading: boolean;
   messages: ChatMessage[];
   bottomRef: React.RefObject<HTMLDivElement | null>;
 };
@@ -17,11 +20,14 @@ export default function ChatWidgetBody({
   retryEphemeralKey,
   refreshPage,
   micAccessError,
+  loading,
   messages,
   bottomRef,
 }: ChatWidgetBodyProps) {
   return (
-    <ScrollArea className="flex-1 p-4">
+    <ScrollArea
+      className={cn('flex-1 p-4', loading ? 'messages-screen-loading' : '')}
+    >
       {combinedError ? (
         <div className="rounded bg-red-500 p-3 text-white">
           <p>
@@ -45,6 +51,12 @@ export default function ChatWidgetBody({
               Refresh page
             </Button>
           </div>
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="messages-screen-loader flex flex-1 flex-col items-center justify-center">
+          <LoaderIcon className="h-8 w-8 animate-spin" />
         </div>
       ) : null}
 

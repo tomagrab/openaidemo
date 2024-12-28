@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import capitalize from '@/lib/utilties/text/capitalize/capitalize';
+import capitalize from '@/lib/utilities/text/capitalize/capitalize';
 
 interface Message {
   role: 'user' | 'assistant';

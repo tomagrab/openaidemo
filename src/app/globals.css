@@ -89,6 +89,13 @@ body {
     @apply bg-background text-foreground;
   }
 
+  /* Messages Styling */
+  .messages-screen-loading {
+    [data-radix-scroll-area-viewport] {
+      @apply flex flex-1 flex-col items-center justify-center;
+    }
+  }
+
   .message-bubble {
     .markdown-content {
       @apply min-w-[20ch] max-w-[25ch];

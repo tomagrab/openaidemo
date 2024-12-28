@@ -10,7 +10,7 @@ import {
 import { Volume2Icon, VolumeOffIcon, MinusIcon } from 'lucide-react';
 
 type ChatWidgetHeaderProps = {
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  handleCloseWidget: () => void;
   turnDetection: turn_detection;
   toggleVADMode: () => Promise<void>;
   sessionLoading: boolean;
@@ -19,7 +19,7 @@ type ChatWidgetHeaderProps = {
 };
 
 export default function ChatWidgetHeader({
-  setOpen,
+  handleCloseWidget,
   turnDetection,
   toggleVADMode,
   sessionLoading,
@@ -62,7 +62,7 @@ export default function ChatWidgetHeader({
 
       <button
         className="text-muted-foreground hover:text-foreground"
-        onClick={() => setOpen(false)}
+        onClick={() => handleCloseWidget()}
         title="Minimize chat"
       >
         <MinusIcon className="h-5 w-5" />

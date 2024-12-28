@@ -1,10 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import {
   ChatMessage,
-  EphemeralKey,
   RealtimeTextDeltaEvent,
   RealtimeResponseDoneEvent,
   RealtimeFunctionCallDeltaEvent,
@@ -12,32 +10,35 @@ import {
   RealtimeServerEvent,
   turn_detection,
 } from '@/lib/types/openai/openai';
-import {
-  setHeaderEmojiDefinition,
-  setThemeDefinition,
-  setHomePageContentDefinition,
-  useOpenAIDemoContext,
-} from '@/lib/context/openai-demo-context/openai-demo-context';
+import { setHeaderEmojiDefinition } from '@/lib/function-calls/definitions/set-header-emoji/set-header-emoji';
+import { setThemeDefinition } from '@/lib/function-calls/definitions/set-theme/set-theme';
+import { setHomePageContentDefinition } from '@/lib/function-calls/definitions/set-home-page-content/set-home-page-content';
+import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
+import { tryParseJson } from '@/lib/utilities/json/try-parse-json/try-parse-json';
+import { useCreateSession } from '@/hooks/openai/use-create-session/use-create-session';
+import { handleFunctionCall } from '@/lib/utilities/realtime/handle-function-call/handle-function-call';
 
 export function useRealtimeAPI() {
   // 1) React Query ephemeral key creation
   const {
     mutate: createSession,
     data: sessionData,
-    error: sessionError,
     isPending: sessionLoading,
+    error: sessionError,
     reset: resetMutation,
-  } = useMutation<EphemeralKey, unknown, void>({
-    mutationFn: async () => {
-      const response = await fetch('/api/openai/session', { method: 'POST' });
-      if (!response.ok) {
-        throw new Error(
-          `Failed to create ephemeral key: ${response.statusText}`,
-        );
-      }
-      return response.json();
-    },
-  });
+  } = useCreateSession();
+
+  const closeSessionAndConnection = useCallback(() => {
+    if (dcRef.current) {
+      dcRef.current.close();
+    }
+    if (pcRef.current) {
+      pcRef.current.close();
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+  }, []);
 
   // 2) Local state
   const [ephemeralKey, setEphemeralKey] = useState<string | null>(null);
@@ -60,27 +61,6 @@ export function useRealtimeAPI() {
 
   const { setHeaderEmoji, setTheme, setHomePageContent } =
     useOpenAIDemoContext();
-
-  /************************************************
-   * Utility: parse JSON-like text if present
-   ************************************************/
-  function tryParseJson(str: string): string {
-    // If the model returns a JSON string like {"text":"something"},
-    // we can attempt to parse it and extract the "text".
-    // If parse fails, just return the raw string.
-    try {
-      // If it is something like: {"text":"Hello world"}
-      const parsed = JSON.parse(str);
-      // If we see parsed.text, we can return it
-      if (parsed && typeof parsed === 'object' && 'text' in parsed) {
-        return parsed.text;
-      }
-      // else return original
-      return str;
-    } catch {
-      return str;
-    }
-  }
 
   /************************************************
    * 3) Handlers for Realtime events
@@ -111,78 +91,15 @@ export function useRealtimeAPI() {
       // Check if there's a function call in output:
       const outputItems = evt.response?.output ?? [];
       const fnCall = outputItems.find(item => item.type === 'function_call');
-      console.log('Function call:', fnCall);
       if (fnCall) {
-        switch (fnCall.name) {
-          case 'setHeaderEmoji':
-            // If the function call is setHeaderEmoji,
-            // we can try to extract the arguments
-            // arguments might be a JSON string
-            try {
-              const parsedArgs =
-                typeof fnCall.arguments === 'string'
-                  ? JSON.parse(fnCall.arguments)
-                  : fnCall.arguments;
-              if (
-                typeof parsedArgs === 'object' &&
-                parsedArgs &&
-                'emoji' in parsedArgs &&
-                typeof parsedArgs.emoji === 'string'
-              ) {
-                // Now call our local function
-                setHeaderEmoji(parsedArgs.emoji);
-              }
-            } catch (err) {
-              console.error(
-                'Failed to parse arguments for updateHeaderEmoji:',
-                err,
-              );
-            }
-            break;
-          case 'setTheme':
-            try {
-              const parsedArgs =
-                typeof fnCall.arguments === 'string'
-                  ? JSON.parse(fnCall.arguments)
-                  : fnCall.arguments;
-              if (
-                typeof parsedArgs === 'object' &&
-                parsedArgs &&
-                'theme' in parsedArgs &&
-                typeof parsedArgs.theme === 'string'
-              ) {
-                setTheme(parsedArgs.theme);
-              }
-            } catch (err) {
-              console.error('Failed to parse arguments for setTheme:', err);
-            }
-            break;
-          case 'setHomePageContent':
-            try {
-              const parsedArgs =
-                typeof fnCall.arguments === 'string'
-                  ? JSON.parse(fnCall.arguments)
-                  : fnCall.arguments;
-              if (
-                typeof parsedArgs === 'object' &&
-                parsedArgs &&
-                'content' in parsedArgs &&
-                typeof parsedArgs.content === 'string'
-              ) {
-                setHomePageContent(parsedArgs.content);
-              }
-            } catch (err) {
-              console.error(
-                'Failed to parse arguments for setHomePageContent:',
-                err,
-              );
-            }
-            break;
-          default:
-            console.log('Unhandled function call:', fnCall);
-            break;
-        }
+        handleFunctionCall(
+          fnCall,
+          setHeaderEmoji,
+          setTheme,
+          setHomePageContent,
+        );
       }
+
       setIsResponseInProgress(false);
     },
     [setHeaderEmoji, setTheme, setHomePageContent],
@@ -391,7 +308,97 @@ export function useRealtimeAPI() {
     }
   }, [sessionData]);
 
-  // 5d) init WebRTC once ephemeralKey is ready
+  const init = async () => {
+    if (!ephemeralKey) return;
+    setRtcLoading(true);
+
+    pcRef.current = new RTCPeerConnection();
+
+    // remote audio: create <audio>, attach ontrack
+    let audioEl = audioRef.current;
+    if (!audioEl) {
+      audioEl = document.createElement('audio');
+      audioEl.autoplay = true;
+      audioRef.current = audioEl;
+    }
+
+    audioEl.srcObject = null;
+
+    gotAudioTrackRef.current = false;
+
+    pcRef.current.ontrack = event => {
+      if (!gotAudioTrackRef.current && event.streams && event.streams[0]) {
+        audioEl!.srcObject = event.streams[0];
+        gotAudioTrackRef.current = true;
+      }
+    };
+
+    let localStream: MediaStream;
+
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to get local audio stream:', err);
+      setMicAccessError('Failed to access microphone');
+      return;
+    }
+
+    localStream.getTracks().forEach(track => {
+      pcRef.current?.addTrack(track, localStream);
+    });
+
+    localStreamRef.current = localStream;
+
+    // create data channel
+    dcRef.current = pcRef.current.createDataChannel('oai-events');
+
+    dcRef.current.addEventListener('message', handleDataChannelMessage);
+
+    const offer = await pcRef.current.createOffer();
+
+    await pcRef.current.setLocalDescription(offer);
+
+    try {
+      const baseUrl = 'https://api.openai.com/v1/realtime';
+      const model = 'gpt-4o-realtime-preview-2024-12-17';
+      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+        method: 'POST',
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          'Content-Type': 'application/sdp',
+        },
+      });
+
+      if (!sdpResponse.ok) {
+        throw new Error(`SDP request failed: ${sdpResponse.statusText}`);
+      }
+
+      const answerSdp = await sdpResponse.text();
+
+      await pcRef.current.setRemoteDescription({
+        type: 'answer',
+        sdp: answerSdp,
+      });
+    } catch (err) {
+      console.error('Connection error:', err);
+      setConnectionError('Failed to establish Realtime connection');
+    } finally {
+      setRtcLoading(false);
+    }
+
+    return () => {
+      pcRef.current?.close();
+    };
+  };
+
+  /* // 5d) init WebRTC once ephemeralKey is ready
   useEffect(() => {
     if (!ephemeralKey) return;
 
@@ -479,9 +486,12 @@ export function useRealtimeAPI() {
     return () => {
       pc?.close();
     };
-  }, [ephemeralKey, handleDataChannelMessage]);
+  }, [ephemeralKey, handleDataChannelMessage]); */
 
   return {
+    init,
+    closeSessionAndConnection,
+
     messages,
     userInput,
     setUserInput,

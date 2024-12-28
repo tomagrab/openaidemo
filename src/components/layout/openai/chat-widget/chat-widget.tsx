@@ -11,6 +11,9 @@ import { cn } from '@/lib/utils';
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const {
+    init,
+    closeSessionAndConnection,
+
     messages,
     userInput,
     setUserInput,
@@ -28,6 +31,16 @@ export default function ChatWidget() {
     rtcLoading,
     isResponseInProgress,
   } = useRealtimeAPI();
+
+  const handleOpenWidget = () => {
+    setOpen(true);
+    init();
+  };
+
+  const handleCloseWidget = () => {
+    setOpen(false);
+    closeSessionAndConnection();
+  };
 
   // Combine ephemeral key creation error + RTC errors
   const combinedError = sessionError || micAccessError || connectionError;
@@ -50,7 +63,7 @@ export default function ChatWidget() {
         <>
           {/* Header */}
           <ChatWidgetHeader
-            setOpen={setOpen}
+            handleCloseWidget={handleCloseWidget}
             turnDetection={turnDetection}
             toggleVADMode={toggleVADMode}
             sessionLoading={sessionLoading}
@@ -64,6 +77,7 @@ export default function ChatWidget() {
             retryEphemeralKey={retryEphemeralKey}
             refreshPage={refreshPage}
             micAccessError={micAccessError}
+            loading={sessionLoading || rtcLoading}
             messages={messages}
             bottomRef={bottomRef}
           />
@@ -82,7 +96,7 @@ export default function ChatWidget() {
       ) : (
         <MessageSquareIcon
           className="flex-1 cursor-pointer"
-          onClick={() => setOpen(true)}
+          onClick={() => handleOpenWidget()}
         />
       )}
     </div>
