@@ -1,5 +1,6 @@
 'use client';
 
+import { userLocation } from '@/lib/types/context/user-location/user-location';
 import { useTheme } from 'next-themes';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
@@ -12,6 +13,9 @@ type OpenAIDemoContextValue = {
 
   homePageContent: string;
   setHomePageContent: React.Dispatch<React.SetStateAction<string>>;
+
+  userLocation: userLocation | null;
+  setUserLocation: React.Dispatch<React.SetStateAction<userLocation | null>>;
 };
 
 const OpenAIDemoContext = createContext<OpenAIDemoContextValue | undefined>(
@@ -46,6 +50,8 @@ Enjoy! 🚀
     `,
   );
 
+  const [userLocation, setUserLocation] = useState<userLocation | null>(null);
+
   const { theme, setTheme } = useTheme();
 
   const value: OpenAIDemoContextValue = {
@@ -55,6 +61,8 @@ Enjoy! 🚀
     setTheme,
     homePageContent,
     setHomePageContent,
+    userLocation,
+    setUserLocation,
   };
 
   // 6) Return the provider

@@ -1,7 +1,8 @@
-import { WeatherResponse } from '@/lib/types/open-meteo/weather-api/weather-api';
-
-export const getWeather = async (latitude: number, longitude: number) => {
-  let apiUrl = '/api/open-meteo/get-weather';
+export const getReverseGeocodeData = async (
+  latitude: number,
+  longitude: number,
+) => {
+  let apiUrl = '/api/google/geocoding/reverse-geocoding';
 
   if (latitude && longitude) {
     apiUrl += `?lat=${latitude}&lon=${longitude}`;
@@ -20,7 +21,7 @@ export const getWeather = async (latitude: number, longitude: number) => {
     );
   }
 
-  const data: WeatherResponse = await response.json();
+  const data = await response.json();
 
   return data;
 };
