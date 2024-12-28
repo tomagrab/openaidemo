@@ -12,6 +12,12 @@ import {
   RealtimeServerEvent,
   turn_detection,
 } from '@/lib/types/openai/openai';
+import {
+  setHeaderEmojiDefinition,
+  setThemeDefinition,
+  setHomePageContentDefinition,
+  useOpenAIDemoContext,
+} from '@/lib/context/openai-demo-context/openai-demo-context';
 
 export function useRealtimeAPI() {
   // 1) React Query ephemeral key creation
@@ -51,6 +57,9 @@ export function useRealtimeAPI() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const gotAudioTrackRef = useRef(false);
+
+  const { setHeaderEmoji, setTheme, setHomePageContent } =
+    useOpenAIDemoContext();
 
   /************************************************
    * Utility: parse JSON-like text if present
@@ -94,11 +103,91 @@ export function useRealtimeAPI() {
   }, []);
 
   // b) handleResponseDone
-  const handleResponseDone = useCallback((evt: RealtimeResponseDoneEvent) => {
-    console.log('handleResponseDone', evt);
-    setFunctionCallBuffer('');
-    setIsResponseInProgress(false);
-  }, []);
+  const handleResponseDone = useCallback(
+    (evt: RealtimeResponseDoneEvent) => {
+      console.log('handleResponseDone', evt);
+      setFunctionCallBuffer('');
+
+      // Check if there's a function call in output:
+      const outputItems = evt.response?.output ?? [];
+      const fnCall = outputItems.find(item => item.type === 'function_call');
+      console.log('Function call:', fnCall);
+      if (fnCall) {
+        switch (fnCall.name) {
+          case 'setHeaderEmoji':
+            // If the function call is setHeaderEmoji,
+            // we can try to extract the arguments
+            // arguments might be a JSON string
+            try {
+              const parsedArgs =
+                typeof fnCall.arguments === 'string'
+                  ? JSON.parse(fnCall.arguments)
+                  : fnCall.arguments;
+              if (
+                typeof parsedArgs === 'object' &&
+                parsedArgs &&
+                'emoji' in parsedArgs &&
+                typeof parsedArgs.emoji === 'string'
+              ) {
+                // Now call our local function
+                setHeaderEmoji(parsedArgs.emoji);
+              }
+            } catch (err) {
+              console.error(
+                'Failed to parse arguments for updateHeaderEmoji:',
+                err,
+              );
+            }
+            break;
+          case 'setTheme':
+            try {
+              const parsedArgs =
+                typeof fnCall.arguments === 'string'
+                  ? JSON.parse(fnCall.arguments)
+                  : fnCall.arguments;
+              if (
+                typeof parsedArgs === 'object' &&
+                parsedArgs &&
+                'theme' in parsedArgs &&
+                typeof parsedArgs.theme === 'string'
+              ) {
+                setTheme(parsedArgs.theme);
+              }
+            } catch (err) {
+              console.error('Failed to parse arguments for setTheme:', err);
+            }
+            break;
+          case 'setHomePageContent':
+            try {
+              const parsedArgs =
+                typeof fnCall.arguments === 'string'
+                  ? JSON.parse(fnCall.arguments)
+                  : fnCall.arguments;
+              if (
+                typeof parsedArgs === 'object' &&
+                parsedArgs &&
+                'content' in parsedArgs &&
+                typeof parsedArgs.content === 'string'
+              ) {
+                setHomePageContent(parsedArgs.content);
+              }
+            } catch (err) {
+              console.error(
+                'Failed to parse arguments for setHomePageContent:',
+                err,
+              );
+            }
+            break;
+          default:
+            console.log('Unhandled function call:', fnCall);
+            break;
+        }
+
+        setIsResponseInProgress(false);
+      }
+    },
+    [setHeaderEmoji, setTheme, setHomePageContent],
+  );
 
   // c) handleFunctionCallDelta
   const handleFunctionCallDelta = useCallback(
@@ -151,14 +240,18 @@ export function useRealtimeAPI() {
           break;
         case 'session.created':
           console.log('[Session created event]', parsed);
-          // Force turn_detection: null if we want no VAD at start
           dcRef.current?.send(
             JSON.stringify({
               type: 'session.update',
               session: {
                 turn_detection: null,
-                // keep text only
                 modalities: ['text'],
+                tools: [
+                  setHeaderEmojiDefinition,
+                  setThemeDefinition,
+                  setHomePageContentDefinition,
+                ],
+                tool_choice: 'auto',
               },
             }),
           );

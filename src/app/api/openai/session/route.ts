@@ -1,3 +1,4 @@
+import { CUSTOM_INSTRUCTIONS } from '@/lib/openai/custom-instructions/custom-instructions';
 import { RealtimeAPISession } from '@/lib/types/openai/openai';
 import { NextResponse } from 'next/server';
 
@@ -21,7 +22,7 @@ export async function POST() {
       body: JSON.stringify({
         model: process.env.NEXT_PUBLIC_REALTIME_DEFAULT_MODEL,
         modalities: ['text'],
-        instructions: process.env.NEXT_PUBLIC_REALTIME_DEFAULT_INSTRUCTIONS,
+        instructions: CUSTOM_INSTRUCTIONS,
       }),
     });
 

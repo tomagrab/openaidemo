@@ -1,5 +1,6 @@
 import { MarkdownRenderer } from '@/components/layout/markdown/markdown-renderer/markdown-renderer';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage } from '@/lib/types/openai/openai';
 
 type ChatWidgetBodyProps = {
@@ -20,7 +21,7 @@ export default function ChatWidgetBody({
   bottomRef,
 }: ChatWidgetBodyProps) {
   return (
-    <div className="flex-1 space-y-3 overflow-y-auto p-3">
+    <ScrollArea className="flex-1 p-4">
       {combinedError ? (
         <div className="rounded bg-red-500 p-3 text-white">
           <p>
@@ -48,13 +49,13 @@ export default function ChatWidgetBody({
       ) : null}
 
       {messages.map(msg => (
-        <div key={msg.id} className="flex">
+        <div key={msg.id} className="flex flex-1 flex-col p-4">
           {msg.role === 'user' ? (
-            <div className="ml-auto max-w-[70%] rounded bg-blue-500 px-3 py-2">
+            <div className="flex max-w-min justify-end self-end rounded bg-blue-500 p-2">
               <MarkdownRenderer content={msg.content} />
             </div>
           ) : (
-            <div className="mr-auto max-w-[70%] rounded bg-green-500 px-3 py-2">
+            <div className="flex max-w-min justify-start self-start rounded bg-green-500 p-2">
               <MarkdownRenderer content={msg.content} />
             </div>
           )}
@@ -62,6 +63,6 @@ export default function ChatWidgetBody({
       ))}
 
       <div ref={bottomRef} />
-    </div>
+    </ScrollArea>
   );
 }

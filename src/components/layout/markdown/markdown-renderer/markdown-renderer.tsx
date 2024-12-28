@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 
-
 interface MarkdownRendererProps {
   content: string;
 }
@@ -15,7 +14,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeHighlight]}
-      className={`markdown-content`}
+      className={`markdown-content min-w-[20ch] max-w-[25ch]`}
     >
       {content}
     </ReactMarkdown>

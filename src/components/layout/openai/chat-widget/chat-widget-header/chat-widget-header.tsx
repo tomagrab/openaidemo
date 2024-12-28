@@ -1,3 +1,4 @@
+import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
 import { turn_detection } from '@/lib/types/openai/openai';
 import ChatWidgetHeaderBadge from '@/components/layout/openai/chat-widget/chat-widget-header/chat-widget-header-badge/chat-widget-header-badge';
 import {
@@ -23,10 +24,19 @@ export default function ChatWidgetHeader({
   rtcLoading,
   combinedError,
 }: ChatWidgetHeaderProps) {
+  const { headerEmoji } = useOpenAIDemoContext();
+
   return (
     <div className="flex items-center justify-between border-b px-3 py-2">
       <div className="flex items-center gap-2">
-        <h2 className="font-semibold">V-Bot</h2>
+        <div className="flex items-center gap-2">
+          {headerEmoji ? (
+            <span className="text-2xl">{headerEmoji}</span>
+          ) : (
+            <span className="text-2xl">🤖</span>
+          )}
+          <h2 className="font-semibold">V-Bot</h2>
+        </div>
         <ChatWidgetHeaderBadge
           sessionLoading={sessionLoading}
           rtcLoading={rtcLoading}

@@ -89,6 +89,10 @@ body {
     @apply bg-background text-foreground;
   }
 
+  li::marker {
+    @apply hidden;
+  }
+
   /* Markdown Styling */
   .markdown-content {
     p {

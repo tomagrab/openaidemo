@@ -24,7 +24,7 @@ export default function ChatWidgetFooter({
     <div className="flex flex-col border-t p-2">
       {isResponseInProgress && (
         <div className="mb-2 text-sm text-gray-700">
-          <em>Generating response...</em>
+          <em>🧠 Thinking...</em>
         </div>
       )}
       <div className="flex items-center gap-2">
