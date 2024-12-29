@@ -7,6 +7,7 @@ import { LoaderIcon } from 'lucide-react';
 
 type ChatWidgetBodyProps = {
   combinedError: object | null;
+  handleReconnect: () => Promise<void>;
   retryEphemeralKey: () => void;
   refreshPage: () => void;
   micAccessError: string | null;
@@ -17,13 +18,17 @@ type ChatWidgetBodyProps = {
 
 export default function ChatWidgetBody({
   combinedError,
-  retryEphemeralKey,
+  handleReconnect,
   refreshPage,
   micAccessError,
   loading,
   messages,
   bottomRef,
 }: ChatWidgetBodyProps) {
+  const handleReconnectClick = async () => {
+    handleReconnect();
+  };
+
   return (
     <ScrollArea
       className={cn('flex-1 p-4', loading ? 'messages-screen-loading' : '')}
@@ -44,7 +49,7 @@ export default function ChatWidgetBody({
             connection or refreshing the page may resolve the issue.
           </p>
           <div className="flex justify-between pt-2">
-            <Button variant={'default'} onClick={retryEphemeralKey}>
+            <Button variant={'default'} onClick={handleReconnectClick}>
               Retry connection
             </Button>
             <Button variant={'destructive'} onClick={refreshPage}>

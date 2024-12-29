@@ -61,7 +61,7 @@ const ReusableLineChart = <T extends Record<string, number | string>>({
       // Apply the default and optional classes to the chart container
       className={`min-h-[200px] w-full ${className}`}
     >
-      <LineChart data={memoizedData} margin={{ left: 12, right: 12 }}>
+      <LineChart data={memoizedData}>
         {/* Add a background grid to the chart */}
         <CartesianGrid vertical={false} />
         {/* Configure the X-axis with formatted labels */}

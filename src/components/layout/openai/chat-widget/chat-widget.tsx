@@ -27,6 +27,8 @@ export default function ChatWidget() {
     retryEphemeralKey,
     refreshPage,
 
+    handleReconnect,
+
     sessionLoading,
     rtcLoading,
     isResponseInProgress,
@@ -74,6 +76,7 @@ export default function ChatWidget() {
           {/* MESSAGES SCREEN (scrollable) */}
           <ChatWidgetBody
             combinedError={combinedError}
+            handleReconnect={handleReconnect}
             retryEphemeralKey={retryEphemeralKey}
             refreshPage={refreshPage}
             micAccessError={micAccessError}

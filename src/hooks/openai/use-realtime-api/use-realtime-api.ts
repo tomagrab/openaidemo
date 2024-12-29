@@ -7,17 +7,14 @@ import {
   RealtimeResponseDoneEvent,
   RealtimeFunctionCallDeltaEvent,
   RealtimeFileSearchResultsEvent,
-  RealtimeServerEvent,
   turn_detection,
 } from '@/lib/types/openai/openai';
-import { setHeaderEmojiDefinition } from '@/lib/function-calls/definitions/set-header-emoji/set-header-emoji';
-import { setThemeDefinition } from '@/lib/function-calls/definitions/set-theme/set-theme';
-import { setHomePageContentDefinition } from '@/lib/function-calls/definitions/set-home-page-content/set-home-page-content';
 import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
 import { tryParseJson } from '@/lib/utilities/json/try-parse-json/try-parse-json';
 import { useCreateSession } from '@/hooks/openai/use-create-session/use-create-session';
 import { handleFunctionCall } from '@/lib/utilities/openai/realtime/handle-function-call/handle-function-call';
-import { getWeatherDefinition } from '@/lib/function-calls/definitions/get-weather-definition/get-weather-definition';
+
+import { handleDataChannelMessage as handleEvent } from '@/lib/utilities/openai/realtime/handle-data-channel-message/handle-data-channel-message';
 
 export function useRealtimeAPI() {
   // 1) React Query ephemeral key creation
@@ -32,17 +29,23 @@ export function useRealtimeAPI() {
   const closeSessionAndConnection = useCallback(() => {
     if (dcRef.current) {
       dcRef.current.close();
+      setIsDisconnected(true);
     }
     if (pcRef.current) {
       pcRef.current.close();
+      setIsDisconnected(true);
     }
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
     }
+
+    setMessages([]);
   }, []);
 
   // 2) Local state
   const [ephemeralKey, setEphemeralKey] = useState<string | null>(null);
+  const [isDisconnected, setIsDisconnected] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [turnDetection, setTurnDetection] = useState<turn_detection>(null); // OFF by default
   const [userInput, setUserInput] = useState('');
@@ -142,111 +145,39 @@ export function useRealtimeAPI() {
     window.location.reload();
   }, []);
 
-  // single entry for data channel messages
-  const handleDataChannelMessage = useCallback(
+  const onDataChannelMessage = useCallback(
     (event: MessageEvent) => {
-      let parsed: RealtimeServerEvent;
-      try {
-        parsed = JSON.parse(event.data);
-      } catch (err) {
-        console.error(
-          'Could not parse message from data channel:',
-          event.data,
-          err,
-        );
-        return;
-      }
-
-      switch (parsed.type) {
-        case 'response.created':
-          setIsResponseInProgress(true);
-          break;
-        case 'response.text.delta':
-          handleDelta(parsed as RealtimeTextDeltaEvent);
-          break;
-        case 'response.done':
-          handleResponseDone(parsed as RealtimeResponseDoneEvent);
-          break;
-        case 'response.function_call_arguments.delta':
-          handleFunctionCallDelta(parsed as RealtimeFunctionCallDeltaEvent);
-          break;
-        case 'file.search.results':
-          handleFileSearchResults(parsed as RealtimeFileSearchResultsEvent);
-          break;
-        case 'session.created':
-          console.log('[Session created event]', parsed);
+      handleEvent(event.data, {
+        setIsResponseInProgress,
+        handleDelta,
+        handleResponseDone,
+        handleFunctionCallDelta,
+        handleFileSearchResults,
+        refreshPage,
+        // Provide a function for session updates if you want:
+        sendSessionUpdate: partialSession => {
           dcRef.current?.send(
             JSON.stringify({
               type: 'session.update',
-              session: {
-                turn_detection: null,
-                modalities: ['text'],
-                tools: [
-                  setHeaderEmojiDefinition,
-                  setThemeDefinition,
-                  setHomePageContentDefinition,
-                  getWeatherDefinition,
-                ],
-                tool_choice: 'auto',
-              },
+              session: partialSession,
             }),
           );
-          break;
-        case 'session.updated':
-          console.log('[Session updated event]', parsed);
-          break;
-        case 'error':
-          if (parsed.code === 'session_expired') {
-            console.error('Session expired, refreshing...');
-            refreshPage();
-          } else {
-            console.error('[Error event]', parsed);
-          }
-        default:
-          console.log('[Unhandled event]', parsed);
-      }
+        },
+      });
     },
     [
-      refreshPage,
+      setIsResponseInProgress,
       handleDelta,
       handleResponseDone,
       handleFunctionCallDelta,
       handleFileSearchResults,
+      refreshPage,
     ],
   );
 
   /************************************************
    * 4) Send messages
    ************************************************/
-  const handleSend = useCallback(() => {
-    if (!dcRef.current || !userInput.trim()) return;
-    const newUserMsg: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: userInput.trim(),
-    };
-    setMessages(old => [...old, newUserMsg]);
-
-    dcRef.current.send(
-      JSON.stringify({
-        type: 'conversation.item.create',
-        item: {
-          type: 'message',
-          role: 'user',
-          content: [{ type: 'input_text', text: userInput.trim() }],
-        },
-      }),
-    );
-
-    dcRef.current.send(
-      JSON.stringify({
-        type: 'response.create',
-        response: { modalities: ['text'] },
-      }),
-    );
-
-    setUserInput('');
-  }, [userInput]);
 
   // update session
   const updateSession = useCallback((newParams: Record<string, unknown>) => {
@@ -301,6 +232,15 @@ export function useRealtimeAPI() {
     [],
   );
 
+  const handleReconnect = async () => {
+    setIsDisconnected(false);
+    closeSessionAndConnection();
+    // Possibly create ephemeral key again if needed
+    createSession();
+    // Then init
+    init();
+  };
+
   /************************************************
    * 5) Effects to manage ephemeral key & WebRTC
    ************************************************/
@@ -324,7 +264,7 @@ export function useRealtimeAPI() {
     }
   }, [sessionData]);
 
-  const init = async () => {
+  const init = useCallback(async () => {
     if (!ephemeralKey) return;
     setRtcLoading(true);
 
@@ -373,8 +313,12 @@ export function useRealtimeAPI() {
 
     // create data channel
     dcRef.current = pcRef.current.createDataChannel('oai-events');
+    dcRef.current.addEventListener('message', onDataChannelMessage);
 
-    dcRef.current.addEventListener('message', handleDataChannelMessage);
+    dcRef.current.onclose = () => {
+      console.log('Data channel closed');
+      setIsDisconnected(true);
+    };
 
     const offer = await pcRef.current.createOffer();
 
@@ -412,7 +356,54 @@ export function useRealtimeAPI() {
     return () => {
       pcRef.current?.close();
     };
-  };
+  }, [ephemeralKey, onDataChannelMessage]);
+
+  const handleSend = useCallback(() => {
+    if (isDisconnected) {
+      // show a toast or UI "Please reconnect"
+      return;
+    }
+
+    if (!dcRef.current || !userInput.trim()) return;
+
+    // 1) Check if data channel is open
+    if (dcRef.current.readyState !== 'open') {
+      console.warn('Data channel is not open. Attempting to re-init…');
+      // Optionally show some toast: "Session expired, reconnecting…"
+
+      // re-init the session
+      closeSessionAndConnection(); // close old
+      init(); // or do a new ephemeral key + init
+      return; // or queue the userInput for sending after re-init
+    }
+
+    const newUserMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: userInput.trim(),
+    };
+    setMessages(old => [...old, newUserMsg]);
+
+    dcRef.current.send(
+      JSON.stringify({
+        type: 'conversation.item.create',
+        item: {
+          type: 'message',
+          role: 'user',
+          content: [{ type: 'input_text', text: userInput.trim() }],
+        },
+      }),
+    );
+
+    dcRef.current.send(
+      JSON.stringify({
+        type: 'response.create',
+        response: { modalities: ['text'] },
+      }),
+    );
+
+    setUserInput('');
+  }, [userInput, closeSessionAndConnection, init, isDisconnected]);
 
   return {
     init,
@@ -432,8 +423,9 @@ export function useRealtimeAPI() {
     sessionLoading,
     rtcLoading,
 
-    // **NEW** -> We expose if the model is generating a response
     isResponseInProgress,
+
+    handleReconnect,
 
     updateSession,
     functionCallBuffer,
