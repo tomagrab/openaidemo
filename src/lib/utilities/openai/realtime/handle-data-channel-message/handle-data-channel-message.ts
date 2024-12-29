@@ -234,3 +234,23 @@ export function handleDataChannelMessage(
     }
   }
 }
+
+function onSessionCreated(event: Extract<RealtimeServerEvent, { type: 'session.created' }>) {
+    // 1) set or update some internal or global state
+    //    e.g. store the session ID, update session config in a store, etc.
+  
+    // 2) Optionally update UI or show ephemeral message
+    //    e.g. showToast("Session created! Session ID: " + event.session.id);
+  }
+  
+  function onConversationCreated(event: Extract<RealtimeServerEvent, { type: 'conversation.created' }>) {
+    // Possibly store conversation info, e.g. chat ID
+  }
+  
+  function onResponseCreated(event: Extract<RealtimeServerEvent, { type: 'response.created' }>) {
+    // Maybe set an internal “responseInProgress = true”
+    // or update state to show “Assistant is thinking…”
+  }
+  
+  // ...similar for input_audio_buffer.committed, etc.
+  
