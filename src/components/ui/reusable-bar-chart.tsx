@@ -83,7 +83,7 @@ const ReusableBarChart = <T extends Record<string, number | string>>({
           <Bar
             key={String(key)}
             dataKey={key}
-            fill={`var(--color-${String(key).toLowerCase()})`}
+            fill={config[key].color ?? 'black'}
             radius={4}
           />
         ))}

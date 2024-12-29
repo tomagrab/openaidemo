@@ -84,7 +84,7 @@ const ReusableLineChart = <T extends Record<string, number | string>>({
             key={String(key)}
             dataKey={key}
             type="monotone"
-            stroke={`var(--color-${String(key).toLowerCase()})`}
+            stroke={config[key].color ?? 'black'}
             strokeWidth={2}
             dot={false}
           />
