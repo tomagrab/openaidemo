@@ -9,7 +9,14 @@ export async function handleFunctionCall(
   dcRef: RefObject<RTCDataChannel | null>,
   fnCallItem: {
     [key: string]: unknown;
-    content?: string;
+    id?: string;
+    type?: 'message' | 'function_call' | 'function_call_output';
+    content?: Array<{
+      type?: 'text' | 'input_text' | 'input_audio' | 'item_reference';
+      text?: string;
+      audio?: string;
+      transcript?: string;
+    }>;
   },
   setHeaderEmoji: (emoji: string) => void,
   setTheme: (theme: string) => void,

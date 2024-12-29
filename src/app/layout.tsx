@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import ClientProvider from '@/components/query-client/client-provider/client-provider';
 import ChatWidget from '@/components/layout/openai/chat-widget/chat-widget';
 import { OpenAIDemoProvider } from '@/lib/context/openai-demo-context/openai-demo-context';
+import { Toaster } from '@/components/ui/sonner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -45,6 +46,7 @@ export default function RootLayout({
                 <div className="flex h-[calc(100dvh-4rem)] flex-col">
                   <ScrollArea className="flex-1 px-4 pb-4">
                     {children}
+                    <Toaster />
                   </ScrollArea>
                 </div>
                 <ChatWidget />

@@ -2,6 +2,8 @@
 
 import { userLocation } from '@/lib/types/context/user-location/user-location';
 import { WeatherResponse } from '@/lib/types/open-meteo/weather-api/weather-api';
+import { ConversationItem } from '@/lib/types/openai/realtime/conversation/conversation-item/conversation-item';
+import { ConversationState } from '@/lib/types/openai/realtime/conversation/conversation-state/conversation-state';
 import { useTheme } from 'next-themes';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
@@ -20,6 +22,13 @@ type OpenAIDemoContextValue = {
 
   weatherData: WeatherResponse | null;
   setWeatherData: React.Dispatch<React.SetStateAction<WeatherResponse | null>>;
+
+  conversation: ConversationState | null;
+  setConversation: React.Dispatch<
+    React.SetStateAction<ConversationState | null>
+  >;
+
+  addConversationItem: (item: ConversationItem) => void;
 };
 
 const OpenAIDemoContext = createContext<OpenAIDemoContextValue | undefined>(
@@ -48,6 +57,22 @@ hello
 
   const [userLocation, setUserLocation] = useState<userLocation | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherResponse | null>(null);
+  const [conversation, setConversation] = useState<ConversationState | null>(
+    null,
+  );
+
+  const addConversationItem = (item: ConversationItem) => {
+    setConversation(prev => {
+      if (!prev) {
+        // If there's no conversation yet, you might create one or do nothing
+        return null;
+      }
+      return {
+        ...prev,
+        items: [...prev.items, item],
+      };
+    });
+  };
 
   const { theme, setTheme } = useTheme();
 
@@ -62,6 +87,9 @@ hello
     setUserLocation,
     weatherData,
     setWeatherData,
+    conversation,
+    setConversation,
+    addConversationItem,
   };
 
   // 6) Return the provider
