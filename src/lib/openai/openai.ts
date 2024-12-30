@@ -30,3 +30,15 @@ export async function createAssistant() {
     ],
   });
 }
+
+export async function createEmbedding(text: string) {
+  const response = await openai.embeddings.create({
+    model: 'text-embedding-3-small',
+    input: text,
+    dimensions: 3,
+    // optionally: encoding_format: 'float',
+    // optionally: dimensions: 512 (if you want to shorten embeddings)
+  });
+  const [{ embedding }] = response.data;
+  return embedding; // an array of floats
+}

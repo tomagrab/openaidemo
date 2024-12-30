@@ -44,7 +44,7 @@ export default function RootLayout({
               <div className="flex min-h-screen flex-col">
                 <Header />
                 <div className="flex h-[calc(100dvh-4rem)] flex-col">
-                  <ScrollArea className="flex-1 px-4 pb-4">
+                  <ScrollArea className="flex-1 p-4">
                     {children}
                     <Toaster />
                   </ScrollArea>

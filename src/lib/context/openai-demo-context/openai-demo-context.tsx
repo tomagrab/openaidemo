@@ -51,7 +51,6 @@ export function OpenAIDemoProvider({ children }: OpenAIDemoProviderProps) {
     generate text for you.
   </p>
 </div>
-hello
     `,
   );
 
