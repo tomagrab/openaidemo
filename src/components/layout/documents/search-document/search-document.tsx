@@ -10,6 +10,8 @@ type SearchResult = {
   id: string;
   title: string | null;
   content: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export default function SearchDocuments() {

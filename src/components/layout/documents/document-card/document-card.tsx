@@ -13,6 +13,8 @@ type DocumentCardProps = {
     id: string;
     title: string | null;
     content: string | null;
+    created_at: string;
+    updated_at: string;
   };
 };
 
@@ -56,8 +58,13 @@ export default function DocumentCard({ document }: DocumentCardProps) {
       </CardContent>
       <CardFooter>
         <p>
-          <Badge variant="outline">Edit</Badge>
-          <Badge variant="outline">Delete</Badge>
+          Created at: <time>{document.created_at}</time>
+          {document.updated_at && (
+            <>
+              {' '}
+              | Updated at: <time>{document.updated_at}</time>
+            </>
+          )}
         </p>
       </CardFooter>
     </Card>

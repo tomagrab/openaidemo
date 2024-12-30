@@ -69,6 +69,8 @@ export const getDocumentsByQueryVector = async (
   title: string | null;
   content: string | null;
   distance: unknown;
+  created_at: string;
+  updated_at: string;
 }> | null> => {
   try {
     const vectorString = `[${(queryVector as number[]).join(',')}]`;

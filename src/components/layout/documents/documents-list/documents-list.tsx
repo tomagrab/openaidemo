@@ -5,6 +5,8 @@ type DocumentsListProps = {
     id: string;
     title: string | null;
     content: string | null;
+    created_at: string;
+    updated_at: string;
   }[];
 };
 
