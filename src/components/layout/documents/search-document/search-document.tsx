@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import DocumentsList from '@/components/layout/documents/documents-list/documents-list';
 
 type SearchResult = {
-  id: number | string;
+  id: string;
   title: string | null;
   content: string | null;
-  distance: number;
 };
 
 export default function SearchDocuments() {
@@ -78,20 +78,7 @@ export default function SearchDocuments() {
 
       {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
 
-      {results.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {results.map(doc => (
-            <li key={String(doc.id)} className="rounded border p-2">
-              <h4 className="text-md font-bold">
-                {doc.title ?? 'Untitled'} (distance: {doc.distance.toFixed(4)})
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {doc.content?.slice(0, 200) ?? ''}...
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <DocumentsList documents={results} />
     </div>
   );
 }
