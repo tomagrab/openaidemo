@@ -6,7 +6,6 @@ import {
   RealtimeTextDeltaEvent,
   RealtimeResponseDoneEvent,
   RealtimeFunctionCallDeltaEvent,
-  RealtimeFileSearchResultsEvent,
   turn_detection,
 } from '@/lib/types/openai/openai';
 import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
@@ -133,13 +132,6 @@ export function useRealtimeAPI() {
     [],
   );
 
-  // d) handleResponseFileSearchResults
-  const handleResponseFileSearchResults = useCallback(
-    (evt: RealtimeFileSearchResultsEvent) => {
-      console.log('[File search results]', evt.results);
-    },
-    [],
-  );
 
   const refreshPage = useCallback(() => {
     window.location.reload();
@@ -155,7 +147,6 @@ export function useRealtimeAPI() {
         handleDelta,
         handleResponseDone,
         handleFunctionCallDelta,
-        handleResponseFileSearchResults,
         refreshPage,
         // Provide a function for session updates if you want:
         sendSessionUpdate: partialSession => {
@@ -176,7 +167,6 @@ export function useRealtimeAPI() {
       handleDelta,
       handleResponseDone,
       handleFunctionCallDelta,
-      handleResponseFileSearchResults,
       refreshPage,
     ],
   );

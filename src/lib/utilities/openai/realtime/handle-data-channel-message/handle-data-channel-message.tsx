@@ -5,7 +5,6 @@ import {
   RealtimeTextDeltaEvent,
   RealtimeResponseDoneEvent,
   RealtimeFunctionCallDeltaEvent,
-  RealtimeFileSearchResultsEvent,
   ConversationItemCreatedEvent,
 } from '@/lib/types/openai/openai';
 
@@ -47,7 +46,6 @@ import {
   handleResponseOutputItemDone,
   handleResponseContentPartAdded,
   handleResponseContentPartDone,
-  handleResponseFileSearchResults,
   handleResponseRateLimitsUpdated,
   handleResponseErrorEvent,
 } from '@/lib/utilities/openai/realtime/response-handlers/response-handlers';
@@ -68,9 +66,6 @@ export function handleDataChannelMessage(
     handleDelta: (evt: RealtimeTextDeltaEvent) => void;
     handleResponseDone: (evt: RealtimeResponseDoneEvent) => void;
     handleFunctionCallDelta: (evt: RealtimeFunctionCallDeltaEvent) => void;
-    handleResponseFileSearchResults: (
-      evt: RealtimeFileSearchResultsEvent,
-    ) => void;
     refreshPage: () => void;
     sendSessionUpdate?: (partialSession: Record<string, unknown>) => void;
   },
@@ -264,10 +259,6 @@ export function handleDataChannelMessage(
       handleResponseContentPartDone(
         parsed as RealtimeServerEvent & { type: 'response.content_part.done' },
       );
-      return;
-
-    case 'file.search.results':
-      handleResponseFileSearchResults(parsed as RealtimeFileSearchResultsEvent);
       return;
 
     // 5) rate limits

@@ -94,10 +94,6 @@ export type RealtimeFunctionCallDeltaEvent = BaseRealtimeEvent & {
   delta?: string;
 };
 
-export type RealtimeFileSearchResultsEvent = BaseRealtimeEvent & {
-  type: 'file.search.results';
-  results?: Array<Record<string, unknown>>;
-};
 
 export type ConversationItemCreatedEvent = BaseRealtimeEvent & {
   type: 'conversation.item.created';
@@ -125,6 +121,5 @@ export type RealtimeServerEvent =
   | RealtimeTextDeltaEvent
   | RealtimeResponseDoneEvent
   | RealtimeFunctionCallDeltaEvent
-  | RealtimeFileSearchResultsEvent
   | ConversationItemCreatedEvent
   | (BaseRealtimeEvent & Record<string, unknown>);

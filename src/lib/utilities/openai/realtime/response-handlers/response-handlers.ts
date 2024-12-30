@@ -1,5 +1,4 @@
 import {
-  RealtimeFileSearchResultsEvent,
   RealtimeFunctionCallDeltaEvent,
   RealtimeResponseDoneEvent,
   RealtimeServerEvent,
@@ -86,9 +85,6 @@ function handleResponseContentPartDone(
   console.log('Response content part done: ', event);
 }
 
-function handleResponseFileSearchResults(evt: RealtimeFileSearchResultsEvent) {
-  toast.success(`File search results: ${evt.results?.length || 0} found`);
-}
 
 function handleResponseRateLimitsUpdated(
   event: RealtimeServerEvent & { type: 'rate_limits.updated' },
@@ -121,7 +117,6 @@ export {
   handleResponseOutputItemDone,
   handleResponseContentPartAdded,
   handleResponseContentPartDone,
-  handleResponseFileSearchResults,
   handleResponseRateLimitsUpdated,
   handleResponseErrorEvent,
 };
