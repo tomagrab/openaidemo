@@ -15,6 +15,7 @@ import { useCreateSession } from '@/hooks/openai/use-create-session/use-create-s
 import { handleFunctionCall } from '@/lib/utilities/openai/realtime/handle-function-call/handle-function-call';
 
 import { handleDataChannelMessage as handleEvent } from '@/lib/utilities/openai/realtime/handle-data-channel-message/handle-data-channel-message';
+import { toast } from 'sonner';
 
 export function useRealtimeAPI() {
   // 1) React Query ephemeral key creation
@@ -69,12 +70,11 @@ export function useRealtimeAPI() {
     setHomePageContent,
     setUserLocation,
     setWeatherData,
+    conversation,
+    setConversation,
+    addConversationItem,
   } = useOpenAIDemoContext();
 
-  /************************************************
-   * 3) Handlers for Realtime events
-   ************************************************/
-  // a) handleDelta
   const handleDelta = useCallback((evt: RealtimeTextDeltaEvent) => {
     const partial = tryParseJson(evt.delta);
     setMessages(old => {
@@ -133,8 +133,8 @@ export function useRealtimeAPI() {
     [],
   );
 
-  // d) handleFileSearchResults
-  const handleFileSearchResults = useCallback(
+  // d) handleResponseFileSearchResults
+  const handleResponseFileSearchResults = useCallback(
     (evt: RealtimeFileSearchResultsEvent) => {
       console.log('[File search results]', evt.results);
     },
@@ -149,10 +149,13 @@ export function useRealtimeAPI() {
     (event: MessageEvent) => {
       handleEvent(event.data, {
         setIsResponseInProgress,
+        conversation,
+        setConversation,
+        addConversationItem,
         handleDelta,
         handleResponseDone,
         handleFunctionCallDelta,
-        handleFileSearchResults,
+        handleResponseFileSearchResults,
         refreshPage,
         // Provide a function for session updates if you want:
         sendSessionUpdate: partialSession => {
@@ -166,18 +169,17 @@ export function useRealtimeAPI() {
       });
     },
     [
+      conversation,
+      setConversation,
+      addConversationItem,
       setIsResponseInProgress,
       handleDelta,
       handleResponseDone,
       handleFunctionCallDelta,
-      handleFileSearchResults,
+      handleResponseFileSearchResults,
       refreshPage,
     ],
   );
-
-  /************************************************
-   * 4) Send messages
-   ************************************************/
 
   // update session
   const updateSession = useCallback((newParams: Record<string, unknown>) => {
@@ -241,23 +243,17 @@ export function useRealtimeAPI() {
     init();
   };
 
-  /************************************************
-   * 5) Effects to manage ephemeral key & WebRTC
-   ************************************************/
-  // 5a) create ephemeral key on mount
   useEffect(() => {
     if (!sessionData && !sessionLoading && !sessionError) {
       createSession();
     }
   }, [createSession, sessionData, sessionLoading, sessionError]);
 
-  // 5b) retry ephemeral key if user clicks "Retry"
   const retryEphemeralKey = useCallback(() => {
     resetMutation();
     createSession();
   }, [createSession, resetMutation]);
 
-  // 5c) once ephemeral key arrives, store it
   useEffect(() => {
     if (sessionData) {
       setEphemeralKey(sessionData.client_secret.value);
@@ -270,7 +266,6 @@ export function useRealtimeAPI() {
 
     pcRef.current = new RTCPeerConnection();
 
-    // remote audio: create <audio>, attach ontrack
     let audioEl = audioRef.current;
     if (!audioEl) {
       audioEl = document.createElement('audio');
@@ -311,7 +306,6 @@ export function useRealtimeAPI() {
 
     localStreamRef.current = localStream;
 
-    // create data channel
     dcRef.current = pcRef.current.createDataChannel('oai-events');
     dcRef.current.addEventListener('message', onDataChannelMessage);
 
@@ -361,6 +355,7 @@ export function useRealtimeAPI() {
   const handleSend = useCallback(() => {
     if (isDisconnected) {
       // show a toast or UI "Please reconnect"
+      toast('Please reconnect to send messages');
       return;
     }
 
