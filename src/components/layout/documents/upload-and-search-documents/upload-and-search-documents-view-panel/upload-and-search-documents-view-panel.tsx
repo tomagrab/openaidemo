@@ -4,17 +4,17 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dispatch, SetStateAction } from 'react';
 
-type DocumentsPageViewPanelProps = {
+type UploadAndSearchDocumentsViewPanelProps = {
   view: 'all' | 'upload-document' | 'search-documents';
   setView: Dispatch<
     SetStateAction<'all' | 'upload-document' | 'search-documents'>
   >;
 };
 
-export default function DocumentsPageViewPanel({
+export default function UploadAndSearchDocumentsViewPanel({
   view,
   setView,
-}: DocumentsPageViewPanelProps) {
+}: UploadAndSearchDocumentsViewPanelProps) {
   return (
     <div className="flex flex-col gap-4">
       <h3 className="text-lg">Views</h3>

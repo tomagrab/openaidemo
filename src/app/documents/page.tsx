@@ -1,11 +1,14 @@
-import DocumentsPageReact from '@/components/layout/documents/documents-page/documents-page-react/documents-page-react';
+import DocumentsTable from '@/components/layout/documents/document-table/document-table';
+import { getDocuments } from '@/lib/db/tables/documents/documents';
 
-export default function DocumentsPage() {
+export default async function DocumentsPage() {
+  const documents = await getDocuments();
+
   return (
     <div className="flex flex-1 flex-col gap-4">
       <h2 className="text-xl font-semibold">Documents</h2>
 
-      <DocumentsPageReact />
+      <DocumentsTable data={documents} />
     </div>
   );
 }

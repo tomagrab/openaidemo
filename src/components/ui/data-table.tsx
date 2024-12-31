@@ -67,16 +67,14 @@ export default function DataTable<TData, TValue>({
 
   return (
     <div className="flex w-full flex-col gap-2">
-      {table.getRowModel().rows.length ? (
-        <div className="flex items-center gap-2">
-          <DataTableTop
-            placeholder={filterPlaceholder}
-            globalFilter={globalFilter}
-            setGlobalFilter={setGlobalFilter}
-            table={table}
-          />
-        </div>
-      ) : null}
+      <div className="flex items-center gap-2">
+        <DataTableTop
+          placeholder={filterPlaceholder}
+          globalFilter={globalFilter}
+          setGlobalFilter={setGlobalFilter}
+          table={table}
+        />
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>

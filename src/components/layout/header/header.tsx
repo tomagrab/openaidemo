@@ -1,14 +1,6 @@
-import { ModeToggle } from '@/components/theme/mode-toggle/mode-toggle';
+import HeaderNavigationMenu from '@/components/layout/header/header-navigation-menu/header-navigation-menu';
+import ModeToggle from '@/components/theme/mode-toggle/mode-toggle';
 import Link from 'next/link';
-import {
-  NavigationMenu,
-  NavigationMenuIndicator,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-  NavigationMenuViewport,
-} from '@/components/ui/navigation-menu';
 
 export default function Header() {
   return (
@@ -25,42 +17,7 @@ export default function Header() {
 
       {/* Center/Navigation */}
       <div className="flex shrink-0">
-        <NavigationMenu>
-          <NavigationMenuList>
-            {/* Home (simple link) */}
-            <NavigationMenuItem>
-              <Link href="/" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Home
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-
-            {/* Documents (submenu example) */}
-            <NavigationMenuItem>
-              {/* Trigger that displays the dropdown content */}
-              <Link href="/documents" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Documents
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-
-            {/* Users (simple link) */}
-            <NavigationMenuItem>
-              <Link href="/users" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Users
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-
-          {/* NavigationMenuIndicator & NavigationMenuViewport:
-              They usually live outside the list but inside <NavigationMenu>. */}
-          <NavigationMenuIndicator />
-          <NavigationMenuViewport />
-        </NavigationMenu>
+        <HeaderNavigationMenu />
       </div>
 
       {/* Right side: Theme Toggle, etc. */}

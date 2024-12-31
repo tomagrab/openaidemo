@@ -40,34 +40,30 @@ export default function UploadDocumentAlert({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Document Already Exists</AlertDialogTitle>
-          {existingDocuments.map((document, i) => (
-            <Card key={i} className="mt-2">
-              <CardHeader>
-                <CardTitle>{document.title}</CardTitle>
-                <CardDescription>
-                  <Badge>V-Track Knowledge Document</Badge>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MarkdownRenderer content={document.content} />
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <p>
-                  Created at:
-                  <time>
-                    {new Date(document.createdAt).toLocaleDateString()}
-                  </time>
-                </p>
-                <p>
-                  Updated at:
-                  <time>
-                    {new Date(document.createdAt).toLocaleDateString()}
-                  </time>
-                </p>
-              </CardFooter>
-            </Card>
-          ))}
         </AlertDialogHeader>
+        {existingDocuments.map((document, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <CardTitle>{document.title}</CardTitle>
+              <CardDescription>
+                <Badge>V-Track Knowledge Document</Badge>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MarkdownRenderer content={document.content} />
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <p>
+                Created at:
+                <time>{new Date(document.createdAt).toLocaleDateString()}</time>
+              </p>
+              <p>
+                Updated at:
+                <time>{new Date(document.createdAt).toLocaleDateString()}</time>
+              </p>
+            </CardFooter>
+          </Card>
+        ))}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setAlertOpen(false)}>
             Word

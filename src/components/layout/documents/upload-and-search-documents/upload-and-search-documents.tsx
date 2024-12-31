@@ -6,11 +6,11 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
 import { useState } from 'react';
-import DocumentsPageViewPanel from './documents-page-react-view-panel/documents-page-react-view-panel';
-import UploadDocument from '../../upload-document/upload-document';
-import SearchDocuments from '../../search-document/search-document';
+import UploadAndSearchDocumentsViewPanel from '@/components/layout/documents/upload-and-search-documents/upload-and-search-documents-view-panel/upload-and-search-documents-view-panel';
+import UploadDocument from '@/components/layout/documents/upload-document/upload-document';
+import SearchDocuments from '@/components/layout/documents/search-documents/search-documents';
 
-export default function DocumentsPageReact() {
+export default function UploadAndSearchDocuments() {
   const [view, setView] = useState<
     'all' | 'upload-document' | 'search-documents'
   >('all');
@@ -18,7 +18,7 @@ export default function DocumentsPageReact() {
     <div className="flex flex-1">
       <ResizablePanelGroup direction="horizontal" className="rounded-lg border">
         <ResizablePanel defaultSize={10} className="flex items-start p-6">
-          <DocumentsPageViewPanel view={view} setView={setView} />
+          <UploadAndSearchDocumentsViewPanel view={view} setView={setView} />
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel>
