@@ -13,6 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 export default function UploadDocument() {
   const [title, setTitle] = useState('');
@@ -88,6 +89,7 @@ export default function UploadDocument() {
           // e.g. { error: 'Document already exists', details: '...' }
           setDuplicateDocError(errorJson.error || 'Unknown conflict');
           setAlertOpen(true); // open your AlertDialog
+          toast.warning('Document already exists');
         } else {
           // Some other error
           const errText = await res.text();
@@ -96,7 +98,7 @@ export default function UploadDocument() {
       } else {
         // success
         const data = await res.json();
-        console.log('Document created successfully:', data);
+        toast.success(`Document uploaded: ${data.title}`);
       }
     } catch (err) {
       console.error('Upload failed:', err);

@@ -1,4 +1,4 @@
-import { createDocument } from '@/lib/db/tables/documents/documents';
+import { createOrRetrieveDocument } from '@/lib/db/tables/documents/documents';
 import { createEmbedding } from '@/lib/openai/openai';
 import { NextResponse } from 'next/server';
 
@@ -18,7 +18,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
   try {
     const embedding = await createEmbedding(content);
 
-    const newDocument = await createDocument({
+    const newDocument = await createOrRetrieveDocument({
       title,
       content,
       embedding,
