@@ -28,8 +28,8 @@ export default function HomePageContent() {
         <p>
           This application demonstrates advanced AI capabilities, from text
           generation to function calling, dynamic content updates, and more!
-          We've built an intuitive, user-friendly experience to showcase just
-          how powerful modern AI can be.
+          We&apos;ve built an intuitive, user-friendly experience to showcase
+          just how powerful modern AI can be.
         </p>
 
         <h2 className="mb-2 mt-8 text-xl font-semibold">Table of Contents</h2>
