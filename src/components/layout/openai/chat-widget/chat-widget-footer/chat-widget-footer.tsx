@@ -4,8 +4,7 @@ import { SendIcon } from 'lucide-react';
 
 type ChatWidgetFooterProps = {
   isResponseInProgress: boolean;
-  sessionLoading: boolean;
-  rtcLoading: boolean;
+  loading: boolean;
   combinedError: object | null;
   userInput: string;
   setUserInput: (value: string) => void;
@@ -14,8 +13,7 @@ type ChatWidgetFooterProps = {
 
 export default function ChatWidgetFooter({
   isResponseInProgress,
-  sessionLoading,
-  rtcLoading,
+  loading,
   combinedError,
   userInput,
   setUserInput,
@@ -27,15 +25,10 @@ export default function ChatWidgetFooter({
   // 2) Re-focus the textarea whenever it becomes enabled again
   useEffect(() => {
     // If the textarea is NOT disabled, let's focus it
-    if (
-      !isResponseInProgress &&
-      !sessionLoading &&
-      !rtcLoading &&
-      !combinedError
-    ) {
+    if (!isResponseInProgress && !loading && !combinedError) {
       textareaRef.current?.focus();
     }
-  }, [isResponseInProgress, sessionLoading, rtcLoading, combinedError]);
+  }, [isResponseInProgress, loading, combinedError]);
 
   // 3) A small helper: handle Enter vs. Shift+Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -59,12 +52,7 @@ export default function ChatWidgetFooter({
       <div className="flex items-center gap-2">
         <Textarea
           ref={textareaRef} // pass the ref here
-          disabled={
-            isResponseInProgress ||
-            sessionLoading ||
-            rtcLoading ||
-            !!combinedError
-          }
+          disabled={isResponseInProgress || loading || !!combinedError}
           className="flex-1 resize-none"
           placeholder="Type your message…"
           value={userInput}
@@ -73,11 +61,7 @@ export default function ChatWidgetFooter({
         />
         <button
           disabled={
-            isResponseInProgress ||
-            sessionLoading ||
-            rtcLoading ||
-            !!combinedError ||
-            !userInput
+            isResponseInProgress || loading || !!combinedError || !userInput
           }
           onClick={handleSend}
           className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-600 disabled:opacity-50"

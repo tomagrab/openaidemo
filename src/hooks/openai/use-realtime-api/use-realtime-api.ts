@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ChatMessage,
   RealtimeTextDeltaEvent,
@@ -19,12 +19,29 @@ import { toast } from 'sonner';
 export function useRealtimeAPI() {
   // 1) React Query ephemeral key creation
   const {
-    mutate: createSession,
-    data: sessionData,
+    mutate: createSessionMutation,
     isPending: sessionLoading,
     error: sessionError,
     reset: resetMutation,
   } = useCreateSession();
+
+  const createEphemeralKey = useCallback(
+    (opts?: {
+      onSuccess?: (keyValue: string) => void;
+      onError?: (err: unknown) => void;
+    }) => {
+      createSessionMutation(undefined, {
+        onSuccess: data => {
+          // data is your EphemeralKey
+          opts?.onSuccess?.(data.client_secret.value);
+        },
+        onError: err => {
+          opts?.onError?.(err);
+        },
+      });
+    },
+    [createSessionMutation],
+  );
 
   const closeSessionAndConnection = useCallback(() => {
     if (dcRef.current) {
@@ -41,10 +58,14 @@ export function useRealtimeAPI() {
     }
 
     setMessages([]);
+    setMicAccessError(null);
+    setConnectionError(null);
+    setTurnDetection(null);
+    setFunctionCallBuffer('');
+    setIsResponseInProgress(false);
   }, []);
 
   // 2) Local state
-  const [ephemeralKey, setEphemeralKey] = useState<string | null>(null);
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [turnDetection, setTurnDetection] = useState<turn_detection>(null); // OFF by default
@@ -131,7 +152,6 @@ export function useRealtimeAPI() {
     },
     [],
   );
-
 
   const refreshPage = useCallback(() => {
     window.location.reload();
@@ -227,120 +247,113 @@ export function useRealtimeAPI() {
   const handleReconnect = async () => {
     setIsDisconnected(false);
     closeSessionAndConnection();
-    // Possibly create ephemeral key again if needed
-    createSession();
-    // Then init
-    init();
+    createEphemeralKey({
+      onSuccess: key => {
+        init(key);
+      },
+    });
   };
-
-  useEffect(() => {
-    if (!sessionData && !sessionLoading && !sessionError) {
-      createSession();
-    }
-  }, [createSession, sessionData, sessionLoading, sessionError]);
 
   const retryEphemeralKey = useCallback(() => {
     resetMutation();
-    createSession();
-  }, [createSession, resetMutation]);
+    createSessionMutation();
+  }, [createSessionMutation, resetMutation]);
 
-  useEffect(() => {
-    if (sessionData) {
-      setEphemeralKey(sessionData.client_secret.value);
-    }
-  }, [sessionData]);
+  const init = useCallback(
+    async (ephemeralKey: string) => {
+      if (!ephemeralKey) return;
 
-  const init = useCallback(async () => {
-    if (!ephemeralKey) return;
-    setRtcLoading(true);
+      setRtcLoading(true);
 
-    pcRef.current = new RTCPeerConnection();
+      pcRef.current = new RTCPeerConnection();
 
-    let audioEl = audioRef.current;
-    if (!audioEl) {
-      audioEl = document.createElement('audio');
-      audioEl.autoplay = true;
-      audioRef.current = audioEl;
-    }
-
-    audioEl.srcObject = null;
-
-    gotAudioTrackRef.current = false;
-
-    pcRef.current.ontrack = event => {
-      if (!gotAudioTrackRef.current && event.streams && event.streams[0]) {
-        audioEl!.srcObject = event.streams[0];
-        gotAudioTrackRef.current = true;
-      }
-    };
-
-    let localStream: MediaStream;
-
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-    } catch (err) {
-      console.error('Failed to get local audio stream:', err);
-      setMicAccessError('Failed to access microphone');
-      return;
-    }
-
-    localStream.getTracks().forEach(track => {
-      pcRef.current?.addTrack(track, localStream);
-    });
-
-    localStreamRef.current = localStream;
-
-    dcRef.current = pcRef.current.createDataChannel('oai-events');
-    dcRef.current.addEventListener('message', onDataChannelMessage);
-
-    dcRef.current.onclose = () => {
-      console.log('Data channel closed');
-      setIsDisconnected(true);
-    };
-
-    const offer = await pcRef.current.createOffer();
-
-    await pcRef.current.setLocalDescription(offer);
-
-    try {
-      const baseUrl = 'https://api.openai.com/v1/realtime';
-      const model = 'gpt-4o-realtime-preview-2024-12-17';
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
-        method: 'POST',
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          'Content-Type': 'application/sdp',
-        },
-      });
-
-      if (!sdpResponse.ok) {
-        throw new Error(`SDP request failed: ${sdpResponse.statusText}`);
+      let audioEl = audioRef.current;
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.autoplay = true;
+        audioRef.current = audioEl;
       }
 
-      const answerSdp = await sdpResponse.text();
+      audioEl.srcObject = null;
 
-      await pcRef.current.setRemoteDescription({
-        type: 'answer',
-        sdp: answerSdp,
+      gotAudioTrackRef.current = false;
+
+      pcRef.current.ontrack = event => {
+        if (!gotAudioTrackRef.current && event.streams && event.streams[0]) {
+          audioEl!.srcObject = event.streams[0];
+          gotAudioTrackRef.current = true;
+        }
+      };
+
+      let localStream: MediaStream;
+
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+      } catch (err) {
+        console.error('Failed to get local audio stream:', err);
+        setMicAccessError('Failed to access microphone');
+        return;
+      }
+
+      localStream.getTracks().forEach(track => {
+        pcRef.current?.addTrack(track, localStream);
       });
-    } catch (err) {
-      console.error('Connection error:', err);
-      setConnectionError('Failed to establish Realtime connection');
-    } finally {
-      setRtcLoading(false);
-    }
 
-    return () => {
-      pcRef.current?.close();
-    };
-  }, [ephemeralKey, onDataChannelMessage]);
+      localStreamRef.current = localStream;
+
+      dcRef.current = pcRef.current.createDataChannel('oai-events');
+      dcRef.current.addEventListener('message', onDataChannelMessage);
+
+      dcRef.current.onclose = () => {
+        console.log('Data channel closed');
+        setIsDisconnected(true);
+      };
+
+      const offer = await pcRef.current.createOffer();
+
+      await pcRef.current.setLocalDescription(offer);
+
+      try {
+        const baseUrl = 'https://api.openai.com/v1/realtime';
+        const model = 'gpt-4o-realtime-preview-2024-12-17';
+        const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            'Content-Type': 'application/sdp',
+          },
+        });
+
+        if (!sdpResponse.ok) {
+          throw new Error(`SDP request failed: ${sdpResponse.statusText}`);
+        }
+
+        const answerSdp = await sdpResponse.text();
+
+        await pcRef.current.setRemoteDescription({
+          type: 'answer',
+          sdp: answerSdp,
+        });
+      } catch (err) {
+        console.error('Connection error:', err);
+        setConnectionError('Failed to establish Realtime connection');
+      } finally {
+        setRtcLoading(false);
+      }
+
+      return () => {
+        pcRef.current?.close();
+      };
+    },
+    [onDataChannelMessage],
+  );
 
   const handleSend = useCallback(() => {
     if (isDisconnected) {
@@ -358,8 +371,11 @@ export function useRealtimeAPI() {
 
       // re-init the session
       closeSessionAndConnection(); // close old
-      init(); // or do a new ephemeral key + init
-      return; // or queue the userInput for sending after re-init
+      createEphemeralKey({
+        onSuccess: key => {
+          init(key);
+        },
+      });
     }
 
     const newUserMsg: ChatMessage = {
@@ -388,9 +404,16 @@ export function useRealtimeAPI() {
     );
 
     setUserInput('');
-  }, [userInput, closeSessionAndConnection, init, isDisconnected]);
+  }, [
+    userInput,
+    closeSessionAndConnection,
+    init,
+    isDisconnected,
+    createEphemeralKey,
+  ]);
 
   return {
+    createEphemeralKey,
     init,
     closeSessionAndConnection,
 

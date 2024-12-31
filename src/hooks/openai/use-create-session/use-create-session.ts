@@ -10,6 +10,7 @@ export function useCreateSession() {
           `Failed to create ephemeral key: ${response.statusText}`,
         );
       }
+
       return response.json();
     },
   });

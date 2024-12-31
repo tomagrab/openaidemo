@@ -13,8 +13,7 @@ type ChatWidgetHeaderProps = {
   handleCloseWidget: () => void;
   turnDetection: turn_detection;
   toggleVADMode: () => Promise<void>;
-  sessionLoading: boolean;
-  rtcLoading: boolean;
+  loading: boolean;
   combinedError: object | null;
 };
 
@@ -22,8 +21,7 @@ export default function ChatWidgetHeader({
   handleCloseWidget,
   turnDetection,
   toggleVADMode,
-  sessionLoading,
-  rtcLoading,
+  loading,
   combinedError,
 }: ChatWidgetHeaderProps) {
   const { headerEmoji } = useOpenAIDemoContext();
@@ -40,8 +38,8 @@ export default function ChatWidgetHeader({
           <h2 className="font-semibold">V-Bot</h2>
         </div>
         <ChatWidgetHeaderBadge
-          sessionLoading={sessionLoading}
-          rtcLoading={rtcLoading}
+          sessionLoading={loading}
+          rtcLoading={loading}
           combinedError={combinedError}
         />
       </div>

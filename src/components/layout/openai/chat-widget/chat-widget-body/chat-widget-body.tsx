@@ -33,7 +33,7 @@ export default function ChatWidgetBody({
     <ScrollArea
       className={cn('flex-1 p-4', loading ? 'messages-screen-loading' : '')}
     >
-      <div className='p-4" flex flex-1 flex-col'>
+      <div className="flex flex-1 flex-col p-4">
         {combinedError ? (
           <div className="rounded bg-red-500 p-3 text-white">
             <p>

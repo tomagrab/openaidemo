@@ -10,7 +10,9 @@ import { cn } from '@/lib/utils';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
+  const [ephemeralKeyLoading, setEphemeralKeyLoading] = useState(false);
   const {
+    createEphemeralKey,
     init,
     closeSessionAndConnection,
 
@@ -36,7 +38,20 @@ export default function ChatWidget() {
 
   const handleOpenWidget = () => {
     setOpen(true);
-    init();
+    setEphemeralKeyLoading(true);
+
+    // 1) Create ephemeral key
+    createEphemeralKey({
+      onSuccess: keyValue => {
+        setEphemeralKeyLoading(false);
+        // 2) Now that we have ephemeral key, call init
+        init(keyValue);
+      },
+      onError: err => {
+        setEphemeralKeyLoading(false);
+        console.error('Ephemeral key creation failed:', err);
+      },
+    });
   };
 
   const handleCloseWidget = () => {
@@ -50,14 +65,18 @@ export default function ChatWidget() {
   // Ref for auto-scroll
   const bottomRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
   }, [messages]);
+
+  const loading = ephemeralKeyLoading || sessionLoading || rtcLoading;
 
   return (
     <div
       className={cn(
         open
-          ? 'fixed bottom-8 right-8 flex h-[600px] w-[400px] flex-col rounded border border-border bg-background shadow-lg transition-all duration-300 ease-in-out animate-in'
+          ? 'animate-in fixed bottom-8 right-8 flex h-[600px] w-[400px] flex-col rounded border border-border bg-background shadow-lg transition-all duration-300 ease-in-out'
           : 'fixed bottom-8 right-8 flex h-12 w-12 flex-col items-center justify-center overflow-hidden rounded-full bg-blue-500 text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-blue-400',
       )}
     >
@@ -68,8 +87,7 @@ export default function ChatWidget() {
             handleCloseWidget={handleCloseWidget}
             turnDetection={turnDetection}
             toggleVADMode={toggleVADMode}
-            sessionLoading={sessionLoading}
-            rtcLoading={rtcLoading}
+            loading={loading}
             combinedError={combinedError}
           />
 
@@ -80,7 +98,7 @@ export default function ChatWidget() {
             retryEphemeralKey={retryEphemeralKey}
             refreshPage={refreshPage}
             micAccessError={micAccessError}
-            loading={sessionLoading || rtcLoading}
+            loading={loading}
             messages={messages}
             bottomRef={bottomRef}
           />
@@ -88,8 +106,7 @@ export default function ChatWidget() {
           {/* FOOTER with Input + "Generating..." UI */}
           <ChatWidgetFooter
             isResponseInProgress={isResponseInProgress}
-            sessionLoading={sessionLoading}
-            rtcLoading={rtcLoading}
+            loading={loading}
             combinedError={combinedError}
             userInput={userInput}
             setUserInput={setUserInput}
