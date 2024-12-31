@@ -31,11 +31,11 @@ export default function ChatWidgetBody({
 
   return (
     <ScrollArea
-      className={cn('flex-1 p-4', loading ? 'messages-screen-loading' : '')}
+      className={cn('flex-1', loading ? 'messages-screen-loading' : '')}
     >
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-col gap-2 p-4">
         {combinedError ? (
-          <div className="rounded bg-red-500 p-3 text-white">
+          <div className="rounded bg-red-500 text-white">
             <p>
               You are receiving the following error: {combinedError?.toString()}
             </p>
@@ -67,7 +67,7 @@ export default function ChatWidgetBody({
         ) : null}
 
         {messages.map(msg => (
-          <div key={msg.id} className="flex flex-col p-4">
+          <div key={msg.id} className="flex flex-col">
             {msg.role === 'user' ? (
               <div className="message-bubble flex max-w-min justify-end self-end rounded bg-blue-500 p-2">
                 <MarkdownRenderer content={msg.content} />

@@ -74,6 +74,7 @@ export default function ChatWidget() {
 
   return (
     <div
+      id="chat-widget-root-div"
       className={cn(
         open
           ? 'animate-in fixed bottom-8 right-8 flex h-[600px] w-[400px] flex-col rounded border border-border bg-background shadow-lg transition-all duration-300 ease-in-out'

@@ -43,7 +43,7 @@ export default function RootLayout({
             <OpenAIDemoProvider>
               <div className="flex flex-1 flex-col">
                 <Header />
-                <div className="flex h-[calc(100dvh-4rem)] flex-col">
+                <div id='root-div' className="flex h-[calc(100dvh-4rem)] flex-col">
                   <ScrollArea className="flex-1 p-4">
                     {children}
                     <Toaster />

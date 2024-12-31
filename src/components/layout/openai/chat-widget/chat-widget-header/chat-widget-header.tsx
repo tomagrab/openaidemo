@@ -44,27 +44,29 @@ export default function ChatWidgetHeader({
         />
       </div>
 
-      {/* Toggle Voice icon */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger onClick={toggleVADMode}>
-            {turnDetection ? <Volume2Icon /> : <VolumeOffIcon />}
-          </TooltipTrigger>
-          <TooltipContent>
-            {turnDetection
-              ? 'Voice is enabled. Click to disable.'
-              : 'Voice is disabled. Click to enable.'}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className="flex items-center gap-2">
+        {/* Toggle Voice icon */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger onClick={toggleVADMode}>
+              {turnDetection ? <Volume2Icon /> : <VolumeOffIcon />}
+            </TooltipTrigger>
+            <TooltipContent>
+              {turnDetection
+                ? 'Voice is enabled. Click to disable.'
+                : 'Voice is disabled. Click to enable.'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
-      <button
-        className="text-muted-foreground hover:text-foreground"
-        onClick={() => handleCloseWidget()}
-        title="Minimize chat"
-      >
-        <MinusIcon className="h-5 w-5" />
-      </button>
+        <button
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => handleCloseWidget()}
+          title="Minimize chat"
+        >
+          <MinusIcon className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   );
 }

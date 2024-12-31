@@ -90,12 +90,14 @@ body {
   }
 
   /* Messages Styling */
-  [data-radix-scroll-area-viewport] {
-    @apply flex flex-1 flex-col items-center justify-center;
-  }
+  #root-div:not(#chat-widget-root-div) {
+    [data-radix-scroll-area-viewport] {
+      @apply flex flex-1 flex-col items-center justify-center;
+    }
 
-  [data-radix-scroll-area-viewport] > div {
-    @apply flex flex-1 !important;
+    [data-radix-scroll-area-viewport] > div {
+      @apply flex flex-1 !important;
+    }
   }
 
   [data-resize-handle] {

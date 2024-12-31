@@ -244,16 +244,6 @@ export function useRealtimeAPI() {
     [],
   );
 
-  const handleReconnect = async () => {
-    setIsDisconnected(false);
-    closeSessionAndConnection();
-    createEphemeralKey({
-      onSuccess: key => {
-        init(key);
-      },
-    });
-  };
-
   const retryEphemeralKey = useCallback(() => {
     resetMutation();
     createSessionMutation();
@@ -355,11 +345,21 @@ export function useRealtimeAPI() {
     [onDataChannelMessage],
   );
 
+  const handleReconnect = useCallback(async () => {
+    setIsDisconnected(false);
+    closeSessionAndConnection();
+    createEphemeralKey({
+      onSuccess: key => {
+        init(key);
+      },
+    });
+  }, [closeSessionAndConnection, createEphemeralKey, init]);
+
   const handleSend = useCallback(() => {
     if (isDisconnected) {
-      // show a toast or UI "Please reconnect"
-      toast('Please reconnect to send messages');
-      return;
+      toast.info('Session expired. Reconnecting…');
+      // Attempt to automatically reconnect
+      handleReconnect();
     }
 
     if (!dcRef.current || !userInput.trim()) return;
@@ -410,6 +410,7 @@ export function useRealtimeAPI() {
     init,
     isDisconnected,
     createEphemeralKey,
+    handleReconnect,
   ]);
 
   return {
