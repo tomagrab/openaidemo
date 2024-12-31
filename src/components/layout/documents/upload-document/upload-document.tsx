@@ -4,12 +4,25 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 export default function UploadDocument() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [duplicateDocError, setDuplicateDocError] = useState<string | null>(
+    null,
+  );
+  const [alertOpen, setAlertOpen] = useState(false);
 
   // When user picks a file from their system
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -60,25 +73,33 @@ export default function UploadDocument() {
 
   async function handleUploadDocument() {
     setLoading(true);
-    setMessage(null);
+    setDuplicateDocError(null);
 
     try {
-      // We pass title & content as query params to your route
       const url = `/api/documents/upload-document?title=${encodeURIComponent(
         title,
       )}&content=${encodeURIComponent(content)}`;
 
       const res = await fetch(url, { method: 'POST' });
       if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err);
+        // If it's a 409 conflict
+        if (res.status === 409) {
+          const errorJson = await res.json();
+          // e.g. { error: 'Document already exists', details: '...' }
+          setDuplicateDocError(errorJson.error || 'Unknown conflict');
+          setAlertOpen(true); // open your AlertDialog
+        } else {
+          // Some other error
+          const errText = await res.text();
+          throw new Error(errText);
+        }
+      } else {
+        // success
+        const data = await res.json();
+        console.log('Document created successfully:', data);
       }
-
-      // e.g. { "id": 123 } or array, depending on how your route returns
-      const data = await res.json();
-      setMessage('Document uploaded with id = ' + (data.id || '???'));
-    } catch (error) {
-      setMessage(`Error: ${String(error)}`);
+    } catch (err) {
+      console.error('Upload failed:', err);
     } finally {
       setLoading(false);
     }
@@ -134,6 +155,24 @@ export default function UploadDocument() {
 
       {/* FEEDBACK MESSAGE */}
       {message && <div className="mt-2 text-sm">{message}</div>}
+
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate Document Found</AlertDialogTitle>
+            <AlertDialogDescription>
+              {duplicateDocError
+                ? `A document with this title/content/embedding already exists!`
+                : 'Unknown conflict'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAlertOpen(false)}>
+              Word
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

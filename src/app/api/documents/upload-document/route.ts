@@ -25,9 +25,18 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     });
 
     return NextResponse.json(newDocument, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+      error instanceof Error ? error.message : 'Unknown error';
+
+    if (errorMessage.startsWith('DUPLICATE_DOCUMENT')) {
+      // 409 = Conflict
+      return NextResponse.json(
+        { error: 'Document already exists', details: errorMessage },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

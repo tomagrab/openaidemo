@@ -7,22 +7,24 @@ import {
 import { bigintReplacer } from '@/lib/utilities/numbers/big-int-replacer/big-int-replacer';
 import { eq, sql } from 'drizzle-orm';
 
-/*
- * Insert Data in the Documents table
- */
-
 export const createDocument = async (data: InsertDocument) => {
   try {
     const newDocument = await db.insert(document).values(data);
     return newDocument;
-  } catch (error) {
-    throw new Error(String(error));
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+
+    // For instance, "duplicate key value violates unique constraint"
+    if (errorMessage.includes('duplicate key value')) {
+      // We'll throw a new error that your client can parse for a known code
+      throw new Error(`DUPLICATE_DOCUMENT: ${errorMessage}`);
+    }
+
+    // Otherwise, re-throw
+    throw new Error(errorMessage);
   }
 };
-
-/*
- * Get Data from the Documents table
- */
 
 export const getDocuments = async (): Promise<SelectDocument[] | null> => {
   try {

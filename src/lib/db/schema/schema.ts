@@ -4,10 +4,11 @@ import { pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core';
 export const document = pgTable('document', {
   id: uuid('id')
     .primaryKey()
+    .unique()
     .default(sql`gen_random_uuid()`),
-  title: text('title').notNull(),
-  content: text('content').notNull(),
-  embedding: vector('embedding', { dimensions: 3 }),
+  title: text('title').unique().notNull(),
+  content: text('content').unique().notNull(),
+  embedding: vector('embedding', { dimensions: 3 }).unique().notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()
