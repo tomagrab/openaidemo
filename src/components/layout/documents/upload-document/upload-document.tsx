@@ -9,21 +9,36 @@ import {
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { toast } from 'sonner';
+import { MarkdownRenderer } from '../../markdown/markdown-renderer/markdown-renderer';
+import { Badge } from '@/components/ui/badge';
 
 export default function UploadDocument() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [duplicateDocError, setDuplicateDocError] = useState<string | null>(
-    null,
-  );
   const [alertOpen, setAlertOpen] = useState(false);
+  const [existingDocuments, setExistingDocuments] = useState<
+    | null
+    | {
+        title: string;
+        content: string;
+        createdAt: string;
+        updatedAt: string;
+      }[]
+  >(null);
 
   // When user picks a file from their system
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -74,7 +89,6 @@ export default function UploadDocument() {
 
   async function handleUploadDocument() {
     setLoading(true);
-    setDuplicateDocError(null);
 
     try {
       const url = `/api/documents/upload-document?title=${encodeURIComponent(
@@ -83,25 +97,28 @@ export default function UploadDocument() {
 
       const res = await fetch(url, { method: 'POST' });
       if (!res.ok) {
-        // If it's a 409 conflict
-        if (res.status === 409) {
-          const errorJson = await res.json();
-          // e.g. { error: 'Document already exists', details: '...' }
-          setDuplicateDocError(errorJson.error || 'Unknown conflict');
-          setAlertOpen(true); // open your AlertDialog
-          toast.warning('Document already exists');
-        } else {
-          // Some other error
-          const errText = await res.text();
-          throw new Error(errText);
-        }
+        const err = await res.json();
+        toast.error(`Upload failed: ${err.error}`);
+        return;
+      }
+
+      const document = await res.json();
+      // document is presumably either newly created or an existing row.
+      // For now, let’s assume it’s existing if document.title != the user’s input,
+      // or document.content != the user’s input, or if document was found by the unique constraints.
+
+      if (document.title !== title || document.content !== content) {
+        // We consider it “existing”
+        setExistingDocuments(document);
+        setAlertOpen(true);
+        toast.warning('Document found in DB');
       } else {
-        // success
-        const data = await res.json();
-        toast.success(`Document uploaded: ${data.title}`);
+        // Inserted brand new document
+        toast.success(`Document inserted: ${document.title}`);
       }
     } catch (err) {
-      console.error('Upload failed:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Upload error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -158,23 +175,47 @@ export default function UploadDocument() {
       {/* FEEDBACK MESSAGE */}
       {message && <div className="mt-2 text-sm">{message}</div>}
 
-      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Duplicate Document Found</AlertDialogTitle>
-            <AlertDialogDescription>
-              {duplicateDocError
-                ? `A document with this title/content/embedding already exists!`
-                : 'Unknown conflict'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAlertOpen(false)}>
-              Word
-            </AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {existingDocuments && existingDocuments.length > 0 ? (
+        <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Document Already Exists</AlertDialogTitle>
+              {existingDocuments.map((document, i) => (
+                <Card key={i} className="mt-2">
+                  <CardHeader>
+                    <CardTitle>{document.title}</CardTitle>
+                    <CardDescription>
+                      <Badge>V-Track Knowledge Document</Badge>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MarkdownRenderer content={document.content} />
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <p>
+                      Created at:
+                      <time>
+                        {new Date(document.createdAt).toLocaleDateString()}
+                      </time>
+                    </p>
+                    <p>
+                      Updated at:
+                      <time>
+                        {new Date(document.createdAt).toLocaleDateString()}
+                      </time>
+                    </p>
+                  </CardFooter>
+                </Card>
+              ))}
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setAlertOpen(false)}>
+                Word
+              </AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </div>
   );
 }
