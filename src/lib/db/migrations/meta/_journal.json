@@ -15,6 +15,20 @@
       "when": 1735599171169,
       "tag": "0001_wet_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1735601819230,
+      "tag": "0002_orange_goliath",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1735602098784,
+      "tag": "0003_sparkling_living_lightning",
+      "breakpoints": true
     }
   ]
 }

@@ -31,4 +31,4 @@ This document provides instructions on how to add a user to the V-Track Web appl
 
 This document has provided instructions on how to add a user to the V-Track Web application.
 
-For further assistance, please feel free to contact Support at any time.
+For further assistance, please feel free to contact [Support](https://www.velsol.com/contact/) at any time.

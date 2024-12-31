@@ -7,18 +7,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { MarkdownRenderer } from '@/components/layout/markdown/markdown-renderer/markdown-renderer';
 
 type DocumentCardProps = {
+  index: number;
   document: {
     id: string;
     title: string | null;
     content: string | null;
-    created_at: string;
-    updated_at: string;
+    createdAt: string;
+    updatedAt: string;
   };
 };
 
-export default function DocumentCard({ document }: DocumentCardProps) {
+export default function DocumentCard({ index, document }: DocumentCardProps) {
   const { title, content } = document;
 
   if (!title && !content) {
@@ -48,23 +50,25 @@ export default function DocumentCard({ document }: DocumentCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>
+          <Badge className="text-sm"># {index}</Badge>
+          {title}
+        </CardTitle>
         <CardDescription>
           <Badge>V-Track Knowledge Document</Badge>
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p>{content}</p>
+        <MarkdownRenderer content={content} />
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex justify-between">
         <p>
-          Created at: <time>{document.created_at}</time>
-          {document.updated_at && (
-            <>
-              {' '}
-              | Updated at: <time>{document.updated_at}</time>
-            </>
-          )}
+          Created at:
+          <time>{new Date(document.createdAt).toLocaleDateString()}</time>
+        </p>
+        <p>
+          Updated at:
+          <time>{new Date(document.createdAt).toLocaleDateString()}</time>
         </p>
       </CardFooter>
     </Card>

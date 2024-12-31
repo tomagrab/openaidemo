@@ -5,16 +5,20 @@ type DocumentsListProps = {
     id: string;
     title: string | null;
     content: string | null;
-    created_at: string;
-    updated_at: string;
+    createdAt: string;
+    updatedAt: string;
   }[];
 };
 
 export default function DocumentsList({ documents }: DocumentsListProps) {
   return (
     <div>
-      {documents.map(document => (
-        <DocumentCard key={document.title} document={document} />
+      {documents.map((document, index) => (
+        <DocumentCard
+          key={document.title}
+          document={document}
+          index={index + 1}
+        />
       ))}
     </div>
   );

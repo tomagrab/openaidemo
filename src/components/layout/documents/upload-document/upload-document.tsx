@@ -85,11 +85,11 @@ export default function UploadDocument() {
   }
 
   return (
-    <div className="rounded border p-4">
+    <div className="relative flex flex-1 flex-col gap-4 rounded border p-4">
       <h3 className="text-lg font-semibold">Upload Document</h3>
 
       {/* FILE PICKER */}
-      <div className="grid gap-2">
+      <div className="flex flex-col gap-2">
         <Label htmlFor="fileInput">Upload file (.md or .txt)</Label>
         <Input
           id="fileInput"
@@ -100,7 +100,7 @@ export default function UploadDocument() {
       </div>
 
       {/* TITLE FIELD */}
-      <div className="grid gap-2">
+      <div className="flex flex-col gap-2">
         <Label htmlFor="titleInput">Title</Label>
         <Input
           id="titleInput"
@@ -111,7 +111,7 @@ export default function UploadDocument() {
       </div>
 
       {/* CONTENT FIELD */}
-      <div className="grid gap-2">
+      <div className="flex flex-col gap-2">
         <Label htmlFor="contentTextarea">Content</Label>
         <textarea
           id="contentTextarea"

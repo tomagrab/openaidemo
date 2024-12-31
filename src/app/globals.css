@@ -90,10 +90,17 @@ body {
   }
 
   /* Messages Styling */
-  .messages-screen-loading {
-    [data-radix-scroll-area-viewport] {
-      @apply flex flex-1 flex-col items-center justify-center;
-    }
+  [data-radix-scroll-area-viewport] {
+    @apply flex flex-1 flex-col items-center justify-center;
+  }
+
+  [data-radix-scroll-area-viewport] > div {
+    @apply flex flex-1 !important;
+  }
+
+  [data-resize-handle] {
+    @apply cursor-row-resize transition-all hover:bg-blue-500;
+    @apply hover:h-4 !important;
   }
 
   .message-bubble {

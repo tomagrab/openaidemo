@@ -1,16 +1,13 @@
-import {
-  bigserial,
-  pgTable,
-  text,
-  timestamp,
-  vector,
-} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { pgTable, text, timestamp, uuid, vector } from 'drizzle-orm/pg-core';
 
 export const document = pgTable('document', {
-  id: bigserial({ mode: 'bigint' }).primaryKey(),
-  title: text(),
-  content: text(),
-  embedding: vector({ dimensions: 3 }),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  embedding: vector('embedding', { dimensions: 3 }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()

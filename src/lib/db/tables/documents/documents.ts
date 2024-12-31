@@ -69,8 +69,8 @@ export const getDocumentsByQueryVector = async (
   title: string | null;
   content: string | null;
   distance: unknown;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }> | null> => {
   try {
     const vectorString = `[${(queryVector as number[]).join(',')}]`;
@@ -81,6 +81,8 @@ export const getDocumentsByQueryVector = async (
         title: document.title,
         content: document.content,
         distance: sql`embedding <=> CAST(${vectorString} AS vector(3))`,
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
       })
       .from(document)
       .orderBy(sql`embedding <=> CAST(${vectorString} AS vector(3))`)

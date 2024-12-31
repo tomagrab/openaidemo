@@ -1,18 +1,11 @@
-import SearchDocuments from '@/components/layout/documents/search-document/search-document';
-import UploadDocument from '@/components/layout/documents/upload-document/upload-document';
-import { Separator } from '@/components/ui/separator';
+import DocumentsPageReact from '@/components/layout/documents/documents-page/documents-page-react/documents-page-react';
 
 export default function DocumentsPage() {
   return (
-    <div className="flex flex-col gap-4">
-      <h2>Documents</h2>
+    <div className="flex flex-1 flex-col gap-4">
+      <h2 className="text-xl font-semibold">Documents</h2>
 
-      <Separator />
-
-      <div className="grid grid-cols-2 gap-2">
-        <UploadDocument />
-        <SearchDocuments />
-      </div>
+      <DocumentsPageReact />
     </div>
   );
 }

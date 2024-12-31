@@ -14,8 +14,8 @@ type OpenAIDemoContextValue = {
   theme: string | undefined;
   setTheme: React.Dispatch<React.SetStateAction<string>>;
 
-  homePageContent: string;
-  setHomePageContent: React.Dispatch<React.SetStateAction<string>>;
+  homePageContent: string | null;
+  setHomePageContent: React.Dispatch<React.SetStateAction<string | null>>;
 
   userLocation: userLocation | null;
   setUserLocation: React.Dispatch<React.SetStateAction<userLocation | null>>;
@@ -41,19 +41,7 @@ type OpenAIDemoProviderProps = {
 
 export function OpenAIDemoProvider({ children }: OpenAIDemoProviderProps) {
   const [headerEmoji, setHeaderEmoji] = useState<string | null>(null);
-  const [homePageContent, setHomePageContent] = useState<string>(
-    `
-<div>
-  <h1>Welcome to the OpenAI Demo</h1>
-  <p>
-    This is a simple demo of how you can use OpenAI's GPT-3 API in your
-    projects. You can interact with the AI assistant and see how it can
-    generate text for you.
-  </p>
-</div>
-    `,
-  );
-
+  const [homePageContent, setHomePageContent] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<userLocation | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherResponse | null>(null);
   const [conversation, setConversation] = useState<ConversationState | null>(
