@@ -4,25 +4,9 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogFooter,
-  AlertDialogCancel,
-} from '@/components/ui/alert-dialog';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+
 import { toast } from 'sonner';
-import { MarkdownRenderer } from '../../markdown/markdown-renderer/markdown-renderer';
-import { Badge } from '@/components/ui/badge';
+import UploadDocumentAlert from './upload-document-alert/upload-document-alert';
 
 export default function UploadDocument() {
   const [title, setTitle] = useState('');
@@ -31,13 +15,13 @@ export default function UploadDocument() {
   const [message, setMessage] = useState<string | null>(null);
   const [alertOpen, setAlertOpen] = useState(false);
   const [existingDocuments, setExistingDocuments] = useState<
-    | null
     | {
         title: string;
         content: string;
         createdAt: string;
         updatedAt: string;
       }[]
+    | null
   >(null);
 
   // When user picks a file from their system
@@ -176,45 +160,11 @@ export default function UploadDocument() {
       {message && <div className="mt-2 text-sm">{message}</div>}
 
       {existingDocuments && existingDocuments.length > 0 ? (
-        <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Document Already Exists</AlertDialogTitle>
-              {existingDocuments.map((document, i) => (
-                <Card key={i} className="mt-2">
-                  <CardHeader>
-                    <CardTitle>{document.title}</CardTitle>
-                    <CardDescription>
-                      <Badge>V-Track Knowledge Document</Badge>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <MarkdownRenderer content={document.content} />
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <p>
-                      Created at:
-                      <time>
-                        {new Date(document.createdAt).toLocaleDateString()}
-                      </time>
-                    </p>
-                    <p>
-                      Updated at:
-                      <time>
-                        {new Date(document.createdAt).toLocaleDateString()}
-                      </time>
-                    </p>
-                  </CardFooter>
-                </Card>
-              ))}
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setAlertOpen(false)}>
-                Word
-              </AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <UploadDocumentAlert
+          alertOpen={alertOpen}
+          setAlertOpen={setAlertOpen}
+          existingDocuments={existingDocuments}
+        />
       ) : null}
     </div>
   );
