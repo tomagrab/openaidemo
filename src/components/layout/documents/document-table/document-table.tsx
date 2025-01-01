@@ -35,6 +35,12 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { MarkdownRenderer } from '../../markdown/markdown-renderer/markdown-renderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 
 /**
  * 1) A local row type for our DataTable.
@@ -84,10 +90,23 @@ const columns: ColumnDef<DocumentRow>[] = [
       <DataTableColumnHeader column={column} title="Title" />
     ),
     cell: ({ row }) => {
+      const document = row.original;
       const val = row.original.title;
       return (
-        <span className="flex flex-col items-center justify-center truncate">
-          {val}
+        <span className="flex flex-col items-center justify-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Link
+                  href={`/documents/${document.id}`}
+                  className="hover:animate-gradient-text relative truncate bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-[length:200%_200%] bg-clip-text transition-all hover:text-transparent"
+                >
+                  {val}
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>Click to view document</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </span>
       );
     },
