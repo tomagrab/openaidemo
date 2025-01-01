@@ -89,68 +89,10 @@ body {
     @apply bg-background text-foreground;
   }
 
-  /* Header Navigation Menu */
-  .navigation-menu-content[data-motion='from-start'] {
-    animation: enterFromLeft 250ms ease;
-  }
-  .navigation-menu-content[data-motion='from-end'] {
-    animation: enterFromRight 250ms ease;
-  }
-  .navigation-menu-content[data-motion='to-start'] {
-    animation: exitToLeft 250ms ease;
-  }
-  .navigation-menu-content[data-motion='to-end'] {
-    animation: exitToRight 250ms ease;
-  }
-
-  @keyframes enterFromLeft {
-    0% {
-      opacity: 0;
-      transform: translateX(-200px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes enterFromRight {
-    0% {
-      opacity: 0;
-      transform: translateX(200px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes exitToLeft {
-    0% {
-      opacity: 1;
-      transform: translateX(0);
-    }
-    100% {
-      opacity: 0;
-      transform: translateX(-200px);
-    }
-  }
-
-  @keyframes exitToRight {
-    0% {
-      opacity: 1;
-      transform: translateX(0);
-    }
-    100% {
-      opacity: 0;
-      transform: translateX(200px);
-    }
-  }
-
   /* Messages Styling */
   #root-div:not(#chat-widget-root-div) {
     [data-radix-scroll-area-viewport] {
-      @apply flex flex-1 flex-col items-center justify-center;
+      @apply flex flex-1 flex-col;
     }
 
     [data-radix-scroll-area-viewport] > div {

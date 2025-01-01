@@ -60,15 +60,6 @@ export default function HeaderNavigationMenu() {
           </Link>
         </NavigationMenuItem>
       </NavigationMenuList>
-      <NavigationMenuIndicator
-        className={cn(
-          'navigation-menu-indicator',
-          'top-full z-[10] flex h-2 items-end justify-center overflow-hidden',
-          'data-[state=visible]:animate-in data-[state=hidden]:animate-out transition-[width_transform]',
-        )}
-      >
-        <div className="h-2 w-2 rotate-45 bg-border" />
-      </NavigationMenuIndicator>
       <NavigationMenuViewport
         className={cn(
           'navigation-menu-viewport origin-top-center absolute left-0 top-full flex w-full justify-center',

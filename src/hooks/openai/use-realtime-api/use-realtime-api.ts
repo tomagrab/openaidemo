@@ -346,13 +346,32 @@ export function useRealtimeAPI() {
   );
 
   const handleReconnect = useCallback(async () => {
-    setIsDisconnected(false);
+    setIsDisconnected(true);
     closeSessionAndConnection();
-    createEphemeralKey({
-      onSuccess: key => {
-        init(key);
-      },
-    });
+
+    try {
+      createEphemeralKey({
+        onSuccess: key => {
+          init(key);
+        },
+      });
+
+      setIsDisconnected(false);
+    } catch (error) {
+      const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error occurred';
+
+      console.error('Failed to reconnect:', errorMessage);
+
+      setConnectionError('Failed to reconnect: ' + errorMessage);
+
+      setIsDisconnected(true);
+
+      return;
+    } finally {
+      setIsDisconnected(false);
+    }
+
   }, [closeSessionAndConnection, createEphemeralKey, init]);
 
   const handleSend = useCallback(() => {
