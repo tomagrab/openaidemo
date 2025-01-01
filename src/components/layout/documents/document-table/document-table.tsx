@@ -35,6 +35,7 @@ import { MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { MarkdownRenderer } from '../../markdown/markdown-renderer/markdown-renderer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 /**
  * 1) A local row type for our DataTable.
@@ -132,8 +133,10 @@ const columns: ColumnDef<DocumentRow>[] = [
     id: 'actions',
     cell: ({ row }) => {
       const document = row.original;
+
       return (
         <Dialog>
+          {/* The entire dropdown is inside <Dialog>. */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -141,53 +144,73 @@ const columns: ColumnDef<DocumentRow>[] = [
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
-              <DialogTrigger asChild>
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => navigator.clipboard.writeText(document.id)}
-                >
-                  Copy Document ID
-                </DropdownMenuItem>
-              </DialogTrigger>
+              {/* 
+                1) A normal label, outside of <DialogTrigger>.
+                2) It's a separate item and not the one that triggers the Dialog.
+              */}
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(document.id)}
+              >
+                Copy Document ID
+              </DropdownMenuItem>
+
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+
+              {/* 
+                3) The <DialogTrigger asChild> wraps exactly 
+                   one child element: <DropdownMenuItem> 
+              */}
+              <DialogTrigger asChild>
+                <DropdownMenuItem>Quick View</DropdownMenuItem>
+              </DialogTrigger>
+
+              <DropdownMenuItem asChild>
                 <Link href={`/documents/${document.id}`}>View Document</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* 
+            The actual Dialog content is placed after 
+            the dropdown, but still within <Dialog>.
+          */}
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Quick View</DialogTitle>
             </DialogHeader>
-            <Card>
-              <CardHeader>
-                <CardTitle>{document.title}</CardTitle>
-                <CardDescription>
-                  <Badge>V-Track Knowledge Document</Badge>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MarkdownRenderer content={document.content} />
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <p>
-                  Created at:
-                  <time>
-                    {new Date(document.createdAt).toLocaleDateString()}
-                  </time>
-                </p>
-                <p>
-                  Updated at:
-                  <time>
-                    {new Date(document.createdAt).toLocaleDateString()}
-                  </time>
-                </p>
-              </CardFooter>
-            </Card>
+            <ScrollArea className="max-h-[calc(100vh-50dvh)]">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{document.title}</CardTitle>
+                  <CardDescription>
+                    <Badge>V-Track Knowledge Document</Badge>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MarkdownRenderer content={document.content} />
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <p>
+                    Created at:{' '}
+                    <time>
+                      {new Date(document.createdAt).toLocaleDateString()}
+                    </time>
+                  </p>
+                  <p>
+                    Updated at:{' '}
+                    <time>
+                      {new Date(document.updatedAt).toLocaleDateString()}
+                    </time>
+                  </p>
+                </CardFooter>
+              </Card>
+            </ScrollArea>
             <DialogFooter>
-              <Button type="submit">Confirm</Button>
+              <Button type="submit">Done</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
