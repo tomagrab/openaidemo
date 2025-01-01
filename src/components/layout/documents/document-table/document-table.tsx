@@ -99,7 +99,7 @@ const columns: ColumnDef<DocumentRow>[] = [
               <TooltipTrigger>
                 <Link
                   href={`/documents/${document.id}`}
-                  className="hover:animate-gradient-text relative truncate bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-[length:200%_200%] bg-clip-text transition-all hover:text-transparent"
+                  className="relative truncate bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-[length:200%_200%] bg-clip-text transition-all hover:animate-gradient-text hover:text-transparent"
                 >
                   {val}
                 </Link>
