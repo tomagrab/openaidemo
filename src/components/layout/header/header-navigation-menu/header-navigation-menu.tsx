@@ -2,12 +2,10 @@ import Link from 'next/link';
 import {
   NavigationMenu,
   NavigationMenuContent,
-  NavigationMenuIndicator,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  NavigationMenuViewport,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
 import React from 'react';
@@ -15,83 +13,60 @@ import { cn } from '@/lib/utils';
 
 export default function HeaderNavigationMenu() {
   return (
-    <NavigationMenu className="relative z-50">
-      {' '}
-      {/* so it floats above content */}
+    <NavigationMenu>
       <NavigationMenuList>
-        {/* Home (simple link) */}
         <NavigationMenuItem>
-          <Link href="/" legacyBehavior passHref>
+          <Link href="/docs" legacyBehavior passHref>
             <NavigationMenuLink className={navigationMenuTriggerStyle()}>
               Home
             </NavigationMenuLink>
           </Link>
         </NavigationMenuItem>
-
-        {/* Documents */}
         <NavigationMenuItem>
           <NavigationMenuTrigger>Documents</NavigationMenuTrigger>
-          <NavigationMenuContent
-            className={cn(
-              'navigation-menu-content', // apply advanced animation classes
-              'p-4',
-            )}
-          >
-            <ul className="grid gap-3 md:w-[200px] lg:w-[250px]">
+          <NavigationMenuContent>
+            <ul className="grid w-[300px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
               <ListItem href="/documents" title="All Documents">
-                All documents in the system.
+                A list of all documents available in the system.
               </ListItem>
-              <ListItem
-                href="/documents/upload-and-search"
-                title="Upload and Search"
-              >
-                Upload and search documents.
+              <ListItem href="/docs/installation" title="Upload and Search">
+                Upload and search for documents.
               </ListItem>
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
-
-        {/* Users link */}
         <NavigationMenuItem>
-          <Link href="/users" legacyBehavior passHref>
+          <Link href="/docs" legacyBehavior passHref>
             <NavigationMenuLink className={navigationMenuTriggerStyle()}>
               Users
             </NavigationMenuLink>
           </Link>
         </NavigationMenuItem>
       </NavigationMenuList>
-      <NavigationMenuViewport
-        className={cn(
-          'navigation-menu-viewport origin-top-center absolute left-0 top-full flex w-full justify-center',
-          'mt-1.5 overflow-hidden rounded-md border bg-popover shadow-lg',
-          'data-[state=open]:animate-in data-[state=closed]:animate-out transition-[width_height]',
-        )}
-      />
     </NavigationMenu>
   );
 }
 
 const ListItem = React.forwardRef<
-  HTMLAnchorElement,
-  { className?: string; title: string; children: React.ReactNode; href: string }
->(({ className, title, children, href }, ref) => {
+  React.ElementRef<'a'>,
+  React.ComponentPropsWithoutRef<'a'>
+>(({ className, title, children, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
-        <Link
+        <a
           ref={ref}
-          href={href}
           className={cn(
-            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
-            'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
+            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
             className,
           )}
+          {...props}
         >
           <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="text-sm leading-snug text-muted-foreground">
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>
-        </Link>
+        </a>
       </NavigationMenuLink>
     </li>
   );
