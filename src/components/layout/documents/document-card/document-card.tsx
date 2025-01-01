@@ -10,7 +10,7 @@ import {
 import { MarkdownRenderer } from '@/components/layout/markdown/markdown-renderer/markdown-renderer';
 
 type DocumentCardProps = {
-  index: number;
+  index?: number | null | undefined;
   document: {
     id: string;
     title: string | null;
@@ -48,10 +48,10 @@ export default function DocumentCard({ index, document }: DocumentCardProps) {
   }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>
-          <Badge className="text-sm"># {index}</Badge>
+          {index ? <Badge className="text-sm"># {index}</Badge> : null}
           {title}
         </CardTitle>
         <CardDescription>

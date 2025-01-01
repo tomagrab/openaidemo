@@ -113,13 +113,31 @@ export const getDocuments = async (): Promise<SelectDocument[] | null> => {
 
 export const getDocumentById = async (
   id: NonNullable<SelectDocument['id']>,
-): Promise<SelectDocument[] | null> => {
+): Promise<{
+  id: string;
+  title: string | null;
+  content: string | null;
+  createdAt: string;
+  updatedAt: string;
+} | null> => {
   try {
     const documentData = await db
-      .select()
+      .select({
+        id: document.id,
+        title: document.title,
+        content: document.content,
+        createdAt: document.createdAt,
+        updatedAt: document.updatedAt,
+      })
       .from(document)
       .where(eq(document.id, id));
-    return documentData;
+    return documentData.length > 0
+      ? {
+          ...documentData[0],
+          createdAt: documentData[0].createdAt.toISOString(),
+          updatedAt: documentData[0].updatedAt.toISOString(),
+        }
+      : null;
   } catch (error) {
     throw new Error(String(error));
   }
@@ -143,7 +161,7 @@ export const getDocumentsByQueryVector = async (
   queryVector: NonNullable<SelectDocument['embedding']>,
   limit = 10,
 ): Promise<Array<{
-  id: bigint;
+  id: string;
   title: string | null;
   content: string | null;
   distance: unknown;

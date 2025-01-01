@@ -15,7 +15,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -182,7 +181,7 @@ const columns: ColumnDef<DocumentRow>[] = [
             <DialogHeader>
               <DialogTitle>Quick View</DialogTitle>
             </DialogHeader>
-            <ScrollArea className="max-h-[calc(100vh-50dvh)]">
+            <ScrollArea className="max-h-[calc(100vh-25dvh)]">
               <Card>
                 <CardHeader>
                   <CardTitle>{document.title}</CardTitle>
@@ -209,9 +208,6 @@ const columns: ColumnDef<DocumentRow>[] = [
                 </CardFooter>
               </Card>
             </ScrollArea>
-            <DialogFooter>
-              <Button type="submit">Done</Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       );
