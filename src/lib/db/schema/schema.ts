@@ -17,3 +17,23 @@ export const document = pgTable('document', {
 
 export type InsertDocument = typeof document.$inferInsert;
 export type SelectDocument = typeof document.$inferSelect;
+
+export const user = pgTable('user', {
+  id: uuid('id')
+    .primaryKey()
+    .unique()
+    .default(sql`gen_random_uuid()`),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  fullName: text('full_name').notNull().$default(() => sql`CONCAT(first_name, ' ', last_name)`),
+  email: text('email').unique().notNull(),
+  username: text('username').unique().notNull(),
+  password: text('password').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export type InsertUser = typeof user.$inferInsert;
+export type SelectUser = typeof user.$inferSelect;
