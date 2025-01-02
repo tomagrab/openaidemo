@@ -10,6 +10,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
 import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
 
 export function LayoutContextMenuItems() {
   const {
@@ -19,7 +20,10 @@ export function LayoutContextMenuItems() {
     setChatWidgetEnabled,
   } = useOpenAIDemoContext();
   const { theme, setTheme } = useTheme();
-  const {} = useOpenAIDemoContext();
+
+  const pathname = usePathname();
+
+  const isHomePage = pathname === '/';
 
   return (
     <>
@@ -50,18 +54,22 @@ export function LayoutContextMenuItems() {
           </ContextMenuCheckboxItem>
         </ContextMenuSubContent>
       </ContextMenuSub>
-      <ContextMenuSeparator />
-      <ContextMenuSub>
-        <ContextMenuSubTrigger>Home Page Content</ContextMenuSubTrigger>
-        <ContextMenuSubContent>
-          <Textarea
-            onInput={e =>
-              setHomePageContent((e.target as HTMLTextAreaElement).value)
-            }
-            value={homePageContent ?? ''}
-          />
-        </ContextMenuSubContent>
-      </ContextMenuSub>
+      {isHomePage ? (
+        <>
+          <ContextMenuSeparator />
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>Home Page Content</ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <Textarea
+                onInput={e =>
+                  setHomePageContent((e.target as HTMLTextAreaElement).value)
+                }
+                value={homePageContent ?? ''}
+              />
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+        </>
+      ) : null}
     </>
   );
 }
