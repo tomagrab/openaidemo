@@ -1,14 +1,12 @@
 import DocumentCard from '@/components/layout/documents/document-card/document-card';
 import { getDocumentById } from '@/lib/db/tables/documents/documents';
 
-type Props = {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+type DocumentPageProps = {
+  params: Promise<{ id: string }>;
 };
 
-export default async function DocumentPage({ params, searchParams }: Props) {
-  const { id } = params;
-  console.log(searchParams);
+export default async function DocumentPage({ params }: DocumentPageProps) {
+  const id = (await params).id;
 
   if (!id) {
     return <div>Document not found</div>;
