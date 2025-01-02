@@ -39,11 +39,17 @@ export default function HeaderNavigationMenu() {
           </NavigationMenuContent>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <Link href="/users" legacyBehavior passHref>
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-              Users
-            </NavigationMenuLink>
-          </Link>
+          <NavigationMenuTrigger>Users</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="flex w-[200px] flex-col gap-4 p-4 md:w-[300px] lg:w-[400px]">
+              <ListItem href="/users" title="All Users">
+                A list of all users available in the system.
+              </ListItem>
+              <ListItem href="/users/create-user" title="Create User">
+                Create a new user.
+              </ListItem>
+            </ul>
+          </NavigationMenuContent>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
