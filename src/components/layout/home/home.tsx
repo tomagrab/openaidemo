@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
+import { MarkdownRenderer } from '@/components/layout/markdown/markdown-renderer/markdown-renderer';
 
 export default function HomePageContent() {
   const { homePageContent } = useOpenAIDemoContext();
@@ -244,5 +245,5 @@ export default function HomePageContent() {
     );
   }
 
-  return <div dangerouslySetInnerHTML={{ __html: homePageContent }} />;
+  return <MarkdownRenderer content={homePageContent} />;
 }

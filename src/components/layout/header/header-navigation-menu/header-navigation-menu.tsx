@@ -25,7 +25,7 @@ export default function HeaderNavigationMenu() {
         <NavigationMenuItem>
           <NavigationMenuTrigger>Documents</NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[300px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
+            <ul className="flex w-[200px] flex-col gap-4 p-4 md:w-[300px] lg:w-[400px]">
               <ListItem href="/documents" title="All Documents">
                 A list of all documents available in the system.
               </ListItem>

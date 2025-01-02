@@ -29,6 +29,9 @@ type OpenAIDemoContextValue = {
   >;
 
   addConversationItem: (item: ConversationItem) => void;
+
+  chatWidgetEnabled: boolean;
+  setChatWidgetEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const OpenAIDemoContext = createContext<OpenAIDemoContextValue | undefined>(
@@ -47,6 +50,7 @@ export function OpenAIDemoProvider({ children }: OpenAIDemoProviderProps) {
   const [conversation, setConversation] = useState<ConversationState | null>(
     null,
   );
+  const [chatWidgetEnabled, setChatWidgetEnabled] = useState(true);
 
   const addConversationItem = (item: ConversationItem) => {
     setConversation(prev => {
@@ -77,6 +81,8 @@ export function OpenAIDemoProvider({ children }: OpenAIDemoProviderProps) {
     conversation,
     setConversation,
     addConversationItem,
+    chatWidgetEnabled,
+    setChatWidgetEnabled,
   };
 
   // 6) Return the provider

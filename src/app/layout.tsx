@@ -8,6 +8,14 @@ import ClientProvider from '@/components/query-client/client-provider/client-pro
 import ChatWidget from '@/components/layout/openai/chat-widget/chat-widget';
 import { OpenAIDemoProvider } from '@/lib/context/openai-demo-context/openai-demo-context';
 import { Toaster } from '@/components/ui/sonner';
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuSeparator,
+  ContextMenuLabel,
+} from '@/components/ui/context-menu';
+import { LayoutContextMenuItems } from '@/components/layout/layout-context-menu/layout-context-menu-items/layout-context-menu-items';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -41,16 +49,28 @@ export default function RootLayout({
             disableTransitionOnChange={true}
           >
             <OpenAIDemoProvider>
-              <div className="flex flex-1 flex-col">
-                <Header />
-                <div id='root-div' className="flex h-[calc(100dvh-4rem)] flex-col">
-                  <ScrollArea className="flex-1 p-4">
-                    {children}
-                    <Toaster />
-                  </ScrollArea>
-                </div>
-                <ChatWidget />
-              </div>
+              <ContextMenu>
+                <ContextMenuTrigger>
+                  <div className="flex flex-1 flex-col">
+                    <Header />
+                    <div
+                      id="root-div"
+                      className="flex h-[calc(100dvh-4rem)] flex-col"
+                    >
+                      <ScrollArea className="flex-1 p-4">
+                        {children}
+                        <Toaster />
+                      </ScrollArea>
+                    </div>
+                    <ChatWidget />
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuLabel>App Config</ContextMenuLabel>
+                  <ContextMenuSeparator />
+                  <LayoutContextMenuItems />
+                </ContextMenuContent>
+              </ContextMenu>
             </OpenAIDemoProvider>
           </ThemeProvider>
         </ClientProvider>

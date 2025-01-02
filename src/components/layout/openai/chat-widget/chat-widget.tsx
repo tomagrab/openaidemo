@@ -7,6 +7,19 @@ import ChatWidgetBody from './chat-widget-body/chat-widget-body';
 import ChatWidgetFooter from './chat-widget-footer/chat-widget-footer';
 import { MessageSquareIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+} from '@/components/ui/context-menu';
+import ChatWidgetContextMenuItems from '@/components/layout/openai/chat-widget/chat-widget-context-menu/chat-widget-context-menu-items/chat-widget-context-menu-items';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -35,6 +48,8 @@ export default function ChatWidget() {
     rtcLoading,
     isResponseInProgress,
   } = useRealtimeAPI();
+
+  const { chatWidgetEnabled, setChatWidgetEnabled } = useOpenAIDemoContext();
 
   const handleOpenWidget = () => {
     setOpen(true);
@@ -71,6 +86,10 @@ export default function ChatWidget() {
   }, [messages]);
 
   const loading = ephemeralKeyLoading || sessionLoading || rtcLoading;
+
+  if (!chatWidgetEnabled) {
+    return null;
+  }
 
   return (
     <div
@@ -115,10 +134,31 @@ export default function ChatWidget() {
           />
         </>
       ) : (
-        <MessageSquareIcon
-          className="flex-1 cursor-pointer"
-          onClick={() => handleOpenWidget()}
-        />
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-blue-400">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger onClick={toggleVADMode}>
+                    <MessageSquareIcon
+                      className="flex-1 cursor-pointer"
+                      onClick={() => handleOpenWidget()}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Right-click to disable the chat widget 🚫
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </ContextMenuTrigger>
+
+          <ContextMenuContent>
+            <ChatWidgetContextMenuItems
+              setChatWidgetEnabled={setChatWidgetEnabled}
+            />
+          </ContextMenuContent>
+        </ContextMenu>
       )}
     </div>
   );
