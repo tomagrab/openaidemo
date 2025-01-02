@@ -29,7 +29,10 @@ export default function HeaderNavigationMenu() {
               <ListItem href="/documents" title="All Documents">
                 A list of all documents available in the system.
               </ListItem>
-              <ListItem href="/docs/installation" title="Upload and Search">
+              <ListItem
+                href="/documents/upload-and-search"
+                title="Upload and Search"
+              >
                 Upload and search for documents.
               </ListItem>
             </ul>

@@ -178,9 +178,8 @@ const columns: ColumnDef<DocumentRow>[] = [
 
               <DropdownMenuSeparator />
 
-              {/* 
-                3) The <DialogTrigger asChild> wraps exactly 
-                   one child element: <DropdownMenuItem> 
+              {/*
+                3) The <DialogTrigger asChild> wraps exactly one child element: <DropdownMenuItem>
               */}
               <DialogTrigger asChild>
                 <DropdownMenuItem>Quick View</DropdownMenuItem>
@@ -192,8 +191,8 @@ const columns: ColumnDef<DocumentRow>[] = [
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* 
-            The actual Dialog content is placed after 
+          {/*
+            The actual Dialog content is placed after
             the dropdown, but still within <Dialog>.
           */}
           <DialogContent>
