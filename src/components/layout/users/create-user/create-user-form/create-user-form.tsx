@@ -45,17 +45,21 @@ export default function CreateUserForm() {
   // 3) Submit handler (client side)
   async function onSubmit(values: CreateUserFormValues) {
     // Call server action
+    console.log('Creating user with values:', values);
     try {
       const result = await createUserAction(values);
 
       if ('error' in result) {
         toast.error(result.error);
+        console.error('Error creating user:', result.error);
         return;
       }
+
+      return result;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      toast.error(errorMessage);
+      console.error('Error creating user:', errorMessage);
     }
   }
 
@@ -63,7 +67,7 @@ export default function CreateUserForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-md space-y-5 rounded border p-4 shadow"
+        className="flex flex-1 flex-col gap-2 rounded border p-4 shadow"
       >
         {/* First Name */}
         <FormField
@@ -145,7 +149,7 @@ export default function CreateUserForm() {
           )}
         />
 
-        <Button type="submit" variant="default" className="w-full">
+        <Button type="submit" variant="default">
           Create User
         </Button>
       </form>

@@ -9,7 +9,7 @@ export default async function UsersPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-1 flex-col">
       <h2>Users</h2>
       <UsersTable users={users} />
     </div>

@@ -1,4 +1,5 @@
 import { searchDocuments } from '@/app/server/actions/documents/document-actions/document-actions';
+import { createUserAction } from '@/app/server/actions/users/user-actions/user-actions';
 import { getReverseGeocodeData } from '@/lib/function-calls/functions/get-reverse-geocode-data/get-reverse-geocode-data';
 import { getWeather } from '@/lib/function-calls/functions/get-weather/get-weather';
 import { userLocation } from '@/lib/types/context/user-location/user-location';
@@ -268,6 +269,108 @@ export async function handleFunctionCall(
           }),
         );
         // Model can respond
+        dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
+      }
+      break;
+    case 'createUser':
+      try {
+        // 1) Parse the arguments
+        const { firstName, lastName, email, username, password } = parsedArgs;
+
+        // 2) Check if the arguments are valid
+        if (
+          !firstName.trim() ||
+          !lastName.trim() ||
+          !email.trim() ||
+          !username.trim() ||
+          !password.trim()
+        ) {
+          // Ask the user to provide all fields
+          dcRef.current?.send(
+            JSON.stringify({
+              type: 'conversation.item.create',
+              item: {
+                type: 'function_call_output',
+                call_id: fnCallItem.call_id,
+                output: JSON.stringify({
+                  success: false,
+                  error: 'Please provide all fields',
+                }),
+              },
+            }),
+          );
+
+          // Optionally ask the model to respond
+          dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
+
+          return;
+        }
+
+        // 3) Call the server action
+        const createdUser = await createUserAction({
+          firstName,
+          lastName,
+          email,
+          username,
+          password,
+        });
+
+        // 4) If an error was returned:
+        if ('error' in createdUser) {
+          // Possibly send a function_call_output with error
+          dcRef.current?.send(
+            JSON.stringify({
+              type: 'conversation.item.create',
+              item: {
+                type: 'function_call_output',
+                call_id: fnCallItem.call_id,
+                output: JSON.stringify({
+                  success: false,
+                  error: createdUser.error,
+                }),
+              },
+            }),
+          );
+
+          // Optionally ask the model to respond
+          dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
+          return;
+        }
+
+        // 5) If success
+        dcRef.current?.send(
+          JSON.stringify({
+            type: 'conversation.item.create',
+            item: {
+              type: 'function_call_output',
+              call_id: fnCallItem.call_id,
+              output: JSON.stringify({
+                success: true,
+                user: createdUser, // e.g. the new user
+              }),
+            },
+          }),
+        );
+
+        dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error in createUser logic:', errorMessage);
+        // Possibly pass an error object back to the model
+        dcRef.current?.send(
+          JSON.stringify({
+            type: 'conversation.item.create',
+            item: {
+              type: 'function_call_output',
+              call_id: fnCallItem.call_id,
+              output: JSON.stringify({
+                success: false,
+                error: errorMessage,
+              }),
+            },
+          }),
+        );
         dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
       }
       break;

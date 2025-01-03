@@ -3,8 +3,9 @@ import { setThemeDefinition } from '@/lib/function-calls/definitions/set-theme/s
 import { setHomePageContentDefinition } from '@/lib/function-calls/definitions/set-home-page-content/set-home-page-content';
 import { getWeatherDefinition } from '@/lib/function-calls/definitions/get-weather-definition/get-weather-definition';
 import { RealtimeServerEvent } from '@/lib/types/openai/openai';
-import { toast } from 'sonner';
 import { searchDocumentsDefinition } from '@/lib/function-calls/definitions/search-documents-definition/search-documents-definition';
+import { createUserDefinition } from '@/lib/function-calls/definitions/create-user-definition/create-user-definition';
+import { toast } from 'sonner';
 
 function handleSessionCreated(
   // we can define a 'SessionCreatedEvent' if you want more detail, or just cast
@@ -27,6 +28,7 @@ function handleSessionCreated(
         setHomePageContentDefinition,
         getWeatherDefinition,
         searchDocumentsDefinition,
+        createUserDefinition,
       ],
       tool_choice: 'auto',
     });

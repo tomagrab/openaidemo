@@ -43,6 +43,20 @@
       "when": 1735814760096,
       "tag": "0005_flimsy_the_liberteens",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1735908560742,
+      "tag": "0006_jittery_warpath",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1735908861494,
+      "tag": "0007_quick_stingray",
+      "breakpoints": true
     }
   ]
 }

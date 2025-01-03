@@ -25,7 +25,7 @@ export const user = pgTable('user', {
     .default(sql`gen_random_uuid()`),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
-  fullName: text('full_name').notNull().$default(() => sql`CONCAT(first_name, ' ', last_name)`),
+  fullName: text('full_name').notNull(),
   email: text('email').unique().notNull(),
   username: text('username').unique().notNull(),
   password: text('password').notNull(),

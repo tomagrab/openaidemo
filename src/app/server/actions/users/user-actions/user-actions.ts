@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { createOrRetrieveUser } from '@/lib/db/tables/users/users'; // your createUser
+import { revalidatePath } from 'next/cache';
 
 /**
  * 1) A Zod schema for form validation on the server side as well.
@@ -24,9 +25,15 @@ export async function createUserAction(data: z.infer<typeof createUserSchema>) {
     return { error: 'VALIDATION_ERROR', details: validated.error.flatten() };
   }
 
+  // Add fullName to the data
+  const dataWithFullName = {
+    ...data,
+    fullName: `${data.firstName} ${data.lastName}`,
+  };
+
   // Now insert into DB
   try {
-    const tryNewUser = await createOrRetrieveUser(data);
+    const tryNewUser = await createOrRetrieveUser(dataWithFullName);
 
     return tryNewUser;
   } catch (error: unknown) {
@@ -39,5 +46,7 @@ export async function createUserAction(data: z.infer<typeof createUserSchema>) {
     }
 
     return { error: errorMessage };
+  } finally {
+    revalidatePath('/users', 'page');
   }
 }
