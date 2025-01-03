@@ -4,6 +4,7 @@ import { setHomePageContentDefinition } from '@/lib/function-calls/definitions/s
 import { getWeatherDefinition } from '@/lib/function-calls/definitions/get-weather-definition/get-weather-definition';
 import { RealtimeServerEvent } from '@/lib/types/openai/openai';
 import { toast } from 'sonner';
+import { searchDocumentsDefinition } from '@/lib/function-calls/definitions/search-documents-definition/search-documents-definition';
 
 function handleSessionCreated(
   // we can define a 'SessionCreatedEvent' if you want more detail, or just cast
@@ -25,6 +26,7 @@ function handleSessionCreated(
         setThemeDefinition,
         setHomePageContentDefinition,
         getWeatherDefinition,
+        searchDocumentsDefinition,
       ],
       tool_choice: 'auto',
     });

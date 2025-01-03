@@ -1,3 +1,4 @@
+import { searchDocuments } from '@/app/server/actions/documents/document-actions/document-actions';
 import { getReverseGeocodeData } from '@/lib/function-calls/functions/get-reverse-geocode-data/get-reverse-geocode-data';
 import { getWeather } from '@/lib/function-calls/functions/get-weather/get-weather';
 import { userLocation } from '@/lib/types/context/user-location/user-location';
@@ -170,6 +171,8 @@ export async function handleFunctionCall(
                 location: { lat, lon },
                 city,
                 state,
+                county,
+                weather,
               }),
             },
           }),
@@ -179,6 +182,93 @@ export async function handleFunctionCall(
         dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
       } catch (err) {
         console.error('Error in getWeather logic:', err);
+      }
+      break;
+
+    case 'searchDocuments':
+      try {
+        // 1) parse query & limit
+        const query = parsedArgs?.query ?? '';
+        const limit = parsedArgs?.limit ?? 10;
+
+        // 2) call the server action
+        const result = await searchDocuments(query, limit);
+
+        // 3) If an error was returned:
+        if ('error' in result) {
+          // Possibly send a function_call_output with error
+          dcRef.current?.send(
+            JSON.stringify({
+              type: 'conversation.item.create',
+              item: {
+                type: 'function_call_output',
+                call_id: fnCallItem.call_id,
+                output: JSON.stringify({
+                  success: false,
+                  error: result.error,
+                }),
+              },
+            }),
+          );
+          // Optionally ask the model to respond
+          dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
+          return;
+        }
+
+        // 4) success
+        // The server action gave us "documents"
+        const documents = result.documents; // or null
+        // You might want to craft a short textual summary of those documents
+
+        // Let's build a "summary" string for the model
+        const summary =
+          documents && documents.length > 0
+            ? documents
+                .map(doc => {
+                  return `Title: ${doc.title}\nContent snippet: ${
+                    doc.content?.slice(0, 100) ?? ''
+                  }...`;
+                })
+                .join('\n\n')
+            : 'No matching documents found.';
+
+        // 5) Send function_call_output back to model
+        dcRef.current?.send(
+          JSON.stringify({
+            type: 'conversation.item.create',
+            item: {
+              type: 'function_call_output',
+              call_id: fnCallItem.call_id,
+              output: JSON.stringify({
+                success: true,
+                count: documents?.length ?? 0,
+                documents: documents ?? [],
+                summary,
+              }),
+            },
+          }),
+        );
+
+        // 6) Then instruct the model to produce a final response:
+        dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
+      } catch (error) {
+        console.error('Error in searchDocuments logic:', error);
+        // Possibly pass a partial function_call_output with error
+        dcRef.current?.send(
+          JSON.stringify({
+            type: 'conversation.item.create',
+            item: {
+              type: 'function_call_output',
+              call_id: fnCallItem.call_id,
+              output: JSON.stringify({
+                success: false,
+                error: String(error),
+              }),
+            },
+          }),
+        );
+        // Model can respond
+        dcRef.current?.send(JSON.stringify({ type: 'response.create' }));
       }
       break;
     default:

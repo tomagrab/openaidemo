@@ -59,16 +59,15 @@ export default function SearchDocuments() {
     setIntervalId(newIntervalId);
 
     try {
-      const response = await searchDocuments(query, limit);
-      const data = await response.json();
+      const documents = await searchDocuments(query, limit);
 
-      if (!data || (Array.isArray(data) && data.length === 0)) {
+      if (documents.status === 500 || !documents.documents) {
         setErrorMsg('No results found');
         setProgress(100);
         return;
       }
 
-      setResults(data);
+      setResults(documents.documents);
 
       // Jump to 100% on success
       setProgress(100);
@@ -77,6 +76,7 @@ export default function SearchDocuments() {
       setProgress(100);
     } finally {
       if (newIntervalId) clearInterval(newIntervalId);
+      setLoading(false);
 
       // Clear the interval so it doesn't keep incrementing
       clearInterval(intervalId);
