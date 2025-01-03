@@ -4,7 +4,7 @@ import * as React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createUserAction } from '@/app/server/actions/user-actions/user-actions';
+import { createUserAction } from '@/app/server/actions/users/user-actions/user-actions';
 import {
   Form,
   FormField,

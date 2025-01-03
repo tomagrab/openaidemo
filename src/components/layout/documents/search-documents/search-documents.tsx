@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import DocumentsList from '@/components/layout/documents/documents-list/documents-list';
 import { Progress } from '@/components/ui/progress';
+import { searchDocuments } from '@/app/server/actions/documents/document-actions/document-actions';
 
 type SearchResult = {
   id: string;
@@ -58,17 +59,15 @@ export default function SearchDocuments() {
     setIntervalId(newIntervalId);
 
     try {
-      const url = `/api/documents/search-documents?query=${encodeURIComponent(
-        query,
-      )}&limit=${encodeURIComponent(limit)}`;
-      const res = await fetch(url);
+      const response = await searchDocuments(query, limit);
+      const data = await response.json();
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText);
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        setErrorMsg('No results found');
+        setProgress(100);
+        return;
       }
 
-      const data: SearchResult[] = await res.json();
       setResults(data);
 
       // Jump to 100% on success
