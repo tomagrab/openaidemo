@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 
 import { toast } from 'sonner';
 import UploadDocumentAlert from './upload-document-alert/upload-document-alert';
+import { uploadDocumentAction } from '@/app/server/actions/documents/document-actions/document-actions';
 
 export default function UploadDocument() {
   const [title, setTitle] = useState('');
@@ -18,8 +19,8 @@ export default function UploadDocument() {
     | {
         title: string;
         content: string;
-        createdAt: string;
-        updatedAt: string;
+        createdAt: Date | undefined;
+        updatedAt: Date | undefined;
       }[]
     | null
   >(null);
@@ -75,35 +76,36 @@ export default function UploadDocument() {
     setLoading(true);
 
     try {
-      const url = `/api/documents/upload-document?title=${encodeURIComponent(
-        title,
-      )}&content=${encodeURIComponent(content)}`;
+      const result = await uploadDocumentAction({ title, content });
 
-      const res = await fetch(url, { method: 'POST' });
-      if (!res.ok) {
-        const err = await res.json();
-        toast.error(`Upload failed: ${err.error}`);
-        return;
-      }
+      // Handle the result
+      const documents = result;
 
-      const document = await res.json();
-      // document is presumably either newly created or an existing row.
-      // For now, let’s assume it’s existing if document.title != the user’s input,
-      // or document.content != the user’s input, or if document was found by the unique constraints.
-
-      if (document.title !== title || document.content !== content) {
-        // We consider it “existing”
-        setExistingDocuments(document);
-        setAlertOpen(true);
-        toast.warning('Document found in DB');
+      if (Array.isArray(documents)) {
+        // Possibly 1 new doc, or multiple existing docs
+        if (
+          documents.length === 1 &&
+          documents[0].title === title &&
+          documents[0].content === content
+        ) {
+          // It's brand new
+          toast.success(`Document inserted: ${documents[0].title}`);
+        } else {
+          // This is an existing doc or multiple docs
+          setExistingDocuments(documents);
+          setAlertOpen(true);
+          toast.warning('Document found in DB');
+        }
       } else {
-        // Inserted brand new document
-        toast.success(`Document inserted: ${document.title}`);
+        // Probably an error object
+        toast.error(documents.error ?? 'Some error');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       toast.error(`Upload error: ${errorMessage}`);
     } finally {
+      setTitle('');
+      setContent('');
       setLoading(false);
     }
   }

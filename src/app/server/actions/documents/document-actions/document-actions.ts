@@ -1,7 +1,10 @@
 'use server';
 
-import { getDocumentsByQueryVector } from '@/lib/db/tables/documents/documents';
+import { z } from 'zod';
 import { createEmbedding } from '@/lib/openai/openai';
+import { getDocumentsByQueryVector } from '@/lib/db/tables/documents/documents';
+import { createOrRetrieveDocument } from '@/lib/db/tables/documents/documents';
+import { revalidatePath } from 'next/cache';
 
 type DocumentResult = {
   id: string;
@@ -55,3 +58,52 @@ export const searchDocuments = async (
     return { error: errorMessage, status: 500 };
   }
 };
+
+// 1) Zod schema for server validation
+const documentSchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+});
+
+export async function uploadDocumentAction(
+  data: z.infer<typeof documentSchema>,
+) {
+  // Validate again
+  const validated = documentSchema.safeParse(data);
+  if (!validated.success) {
+    return { error: 'VALIDATION_ERROR', details: validated.error.flatten() };
+  }
+
+  // 2) create embedding
+  const embedding = await createEmbedding(data.content);
+
+  // 3) insert or retrieve
+  try {
+    const docs = await createOrRetrieveDocument({
+      title: data.title,
+      content: data.content,
+      embedding,
+    });
+
+    // Docs without embedding
+    const documents = docs.map(doc => ({
+      id: doc.id,
+      title: doc.title,
+      content: doc.content,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+    }));
+
+    return documents;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    // Possibly detect duplicates or other errors
+    if (errorMessage.startsWith('DUPLICATE_DOCUMENT')) {
+      return { error: 'Document already exists' };
+    }
+    return { error: errorMessage };
+  } finally {
+    revalidatePath('/documents');
+  }
+}

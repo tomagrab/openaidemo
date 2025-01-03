@@ -25,8 +25,8 @@ type UploadDocumentAlertProps = {
   existingDocuments: {
     title: string;
     content: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date | undefined;
+    updatedAt: Date | undefined;
   }[];
 };
 
@@ -53,14 +53,22 @@ export default function UploadDocumentAlert({
               <MarkdownRenderer content={document.content} />
             </CardContent>
             <CardFooter className="flex justify-between">
-              <p>
-                Created at:
-                <time>{new Date(document.createdAt).toLocaleDateString()}</time>
-              </p>
-              <p>
-                Updated at:
-                <time>{new Date(document.createdAt).toLocaleDateString()}</time>
-              </p>
+              {document.createdAt ? (
+                <p>
+                  Created at:
+                  <time>
+                    {new Date(document.createdAt).toLocaleDateString()}
+                  </time>
+                </p>
+              ) : null}
+              {document.updatedAt ? (
+                <p>
+                  Updated at:
+                  <time>
+                    {new Date(document.updatedAt).toLocaleDateString()}
+                  </time>
+                </p>
+              ) : null}
             </CardFooter>
           </Card>
         ))}
