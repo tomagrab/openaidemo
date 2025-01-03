@@ -1,3 +1,4 @@
+import UsersTable from '@/components/layout/users/users-table/users-table';
 import { getUsers } from '@/lib/db/tables/users/users';
 
 export default async function UsersPage() {
@@ -9,14 +10,8 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <h1>Users</h1>
-      <ul>
-        {users.map(user => (
-          <li key={user.id}>
-            {user.fullName} ({user.email})
-          </li>
-        ))}
-      </ul>
+      <h2>Users</h2>
+      <UsersTable users={users} />
     </div>
   );
 }
