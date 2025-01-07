@@ -43,6 +43,10 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --velocitor-light-blue: 195, 59%, 60%;
+    --velocitor-blue: 195, 59%, 46%;
+    --velocitor-dark-blue: 195, 59%, 40%;
+    --velocitor-blue-foreground: 0 0% 98%;
   }
 
   .dark {
@@ -78,6 +82,10 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --velocitor-light-blue: 195, 59%, 60%;
+    --velocitor-blue: 195, 59%, 46%;
+    --velocitor-dark-blue: 195, 59%, 40%;
+    --velocitor-blue-foreground: 0 0% 98%;
   }
 }
 

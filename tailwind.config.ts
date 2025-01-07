@@ -41,6 +41,18 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        velocitorLightBlue: {
+          DEFAULT: 'hsl(var(--velocitor-light-blue))',
+          foreground: 'hsl(var(--velocitor-blue-foreground))',
+        },
+        velocitorBlue: {
+          DEFAULT: 'hsl(var(--velocitor-blue))',
+          foreground: 'hsl(var(--velocitor-blue-foreground))',
+        },
+        velocitorDarkBlue: {
+          DEFAULT: 'hsl(var(--velocitor-dark-blue))',
+          foreground: 'hsl(var(--velocitor-blue-foreground))',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

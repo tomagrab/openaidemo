@@ -5,7 +5,6 @@ import { useRealtimeAPI } from '@/hooks/openai/use-realtime-api/use-realtime-api
 import ChatWidgetHeader from '@/components/layout/openai/chat-widget/chat-widget-header/chat-widget-header';
 import ChatWidgetBody from './chat-widget-body/chat-widget-body';
 import ChatWidgetFooter from './chat-widget-footer/chat-widget-footer';
-import { MessageSquareIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   ContextMenu,
@@ -20,6 +19,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
+import Image from 'next/image';
+import VBotLogo from 'pub/v-bot-logo.png';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -97,7 +98,7 @@ export default function ChatWidget() {
       className={cn(
         open
           ? 'animate-in fixed bottom-8 right-8 flex h-[600px] w-[400px] flex-col rounded border border-border bg-background shadow-lg transition-all duration-300 ease-in-out'
-          : 'fixed bottom-8 right-8 flex h-12 w-12 flex-col items-center justify-center overflow-hidden rounded-full bg-blue-500 text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-blue-400',
+          : 'fixed bottom-8 right-8 flex h-12 w-12 flex-col items-center justify-center overflow-hidden rounded-full bg-velocitorBlue text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-velocitorLightBlue',
       )}
     >
       {open ? (
@@ -136,14 +137,11 @@ export default function ChatWidget() {
       ) : (
         <ContextMenu>
           <ContextMenuTrigger>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-blue-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 ease-in-out ">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger onClick={toggleVADMode}>
-                    <MessageSquareIcon
-                      className="flex-1 cursor-pointer"
-                      onClick={() => handleOpenWidget()}
-                    />
+                  <Image className="flex-1 cursor-pointer" onClick={() => handleOpenWidget()} height={60} width={60} src={VBotLogo} alt="mic" />
                   </TooltipTrigger>
                   <TooltipContent>
                     Right-click to disable the chat widget 🚫
