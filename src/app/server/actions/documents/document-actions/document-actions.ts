@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { createEmbedding } from '@/lib/openai/openai';
+import { createEmbedding } from '@/lib/openai/assistants/client/client';
 import { getDocumentsByQueryVector } from '@/lib/db/tables/documents/documents';
 import { createOrRetrieveDocument } from '@/lib/db/tables/documents/documents';
 import { revalidatePath } from 'next/cache';

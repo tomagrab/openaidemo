@@ -1,5 +1,5 @@
 import { getDocumentsByQueryVector } from '@/lib/db/tables/documents/documents';
-import { createEmbedding } from '@/lib/openai/openai';
+import { createEmbedding } from '@/lib/openai/assistants/client/client';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {

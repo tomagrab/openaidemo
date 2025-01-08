@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRealtimeAPI } from '@/hooks/openai/use-realtime-api/use-realtime-api';
-import ChatWidgetHeader from '@/components/layout/openai/chat-widget/chat-widget-header/chat-widget-header';
+import ChatWidgetHeader from '@/components/layout/openai/realtime/chat-widget/chat-widget-header/chat-widget-header';
 import ChatWidgetBody from './chat-widget-body/chat-widget-body';
 import ChatWidgetFooter from './chat-widget-footer/chat-widget-footer';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,7 @@ import {
   ContextMenuTrigger,
   ContextMenuContent,
 } from '@/components/ui/context-menu';
-import ChatWidgetContextMenuItems from '@/components/layout/openai/chat-widget/chat-widget-context-menu/chat-widget-context-menu-items/chat-widget-context-menu-items';
+import ChatWidgetContextMenuItems from '@/components/layout/openai/realtime/chat-widget/chat-widget-context-menu/chat-widget-context-menu-items/chat-widget-context-menu-items';
 import {
   Tooltip,
   TooltipContent,
@@ -137,11 +137,18 @@ export default function ChatWidget() {
       ) : (
         <ContextMenu>
           <ContextMenuTrigger>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 ease-in-out ">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 ease-in-out">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger onClick={toggleVADMode}>
-                  <Image className="flex-1 cursor-pointer" onClick={() => handleOpenWidget()} height={60} width={60} src={VBotLogo} alt="mic" />
+                    <Image
+                      className="flex-1 cursor-pointer"
+                      onClick={() => handleOpenWidget()}
+                      height={60}
+                      width={60}
+                      src={VBotLogo}
+                      alt="mic"
+                    />
                   </TooltipTrigger>
                   <TooltipContent>
                     Right-click to disable the chat widget 🚫

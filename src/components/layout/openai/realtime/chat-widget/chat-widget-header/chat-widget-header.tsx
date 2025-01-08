@@ -1,6 +1,6 @@
 import { useOpenAIDemoContext } from '@/lib/context/openai-demo-context/openai-demo-context';
 import { turn_detection } from '@/lib/types/openai/openai';
-import ChatWidgetHeaderBadge from '@/components/layout/openai/chat-widget/chat-widget-header/chat-widget-header-badge/chat-widget-header-badge';
+import ChatWidgetHeaderBadge from '@/components/layout/openai/realtime/chat-widget/chat-widget-header/chat-widget-header-badge/chat-widget-header-badge';
 import {
   Tooltip,
   TooltipContent,

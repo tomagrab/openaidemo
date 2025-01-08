@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/theme/theme-provider/theme-provider'
 import Header from '@/components/layout/header/header';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ClientProvider from '@/components/query-client/client-provider/client-provider';
-import ChatWidget from '@/components/layout/openai/chat-widget/chat-widget';
+import ChatWidget from '@/components/layout/openai/realtime/chat-widget/chat-widget';
 import { OpenAIDemoProvider } from '@/lib/context/openai-demo-context/openai-demo-context';
 import { Toaster } from '@/components/ui/sonner';
 import {
