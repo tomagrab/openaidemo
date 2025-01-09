@@ -36,12 +36,12 @@ export async function streamRun(
   });
 
   // Example 1: Listen to "textCreated" event => The assistant started sending text
-  runStream.on('textCreated', text => {
+  runStream.on('textCreated', () => {
     onData('\nAssistant: ');
   });
 
   // Example 2: Listen to "textDelta" => The assistant appends small text chunks
-  runStream.on('textDelta', (delta, snapshot) => {
+  runStream.on('textDelta', delta => {
     // delta.value typically is the newly streamed text
     onData(delta.value ?? '');
   });
